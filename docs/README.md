@@ -22,7 +22,8 @@ Cada entrega se formaliza abriendo un **issue en GitHub** con:
 | Documento | Para qué sirve |
 |---|---|
 | [`00_introduccion.md`](00_introduccion.md) | **Empezar aquí.** El problema, qué lo hace difícil y por qué elegimos cada pieza del diseño. |
-| [`PLAN_DE_TRABAJO.md`](PLAN_DE_TRABAJO.md) | Todas las tareas en orden, con checkboxes y fechas. |
+| [`PLAN_DE_TRABAJO.md`](PLAN_DE_TRABAJO.md) | Todas las tareas en orden, con checkboxes y responsable ([A] / [B]). |
+| [`REPARTO_TAREAS.md`](REPARTO_TAREAS.md) | Cómo se divide el trabajo entre los dos integrantes y los acuerdos de interfaz para trabajar sin depender el uno del otro. |
 | [`fase1_ray/`](fase1_ray/README.md) | Contrato de API, arquitectura con Ray, mapa de dependencias del middleware y experimento inicial. |
 | [`informe_arquitectura/`](informe_arquitectura/README.md) | Informe de la arquitectura nativa, según el modelo de la metodología (5 secciones) + registro de decisiones. |
 | [`fase3_verificacion/`](fase3_verificacion/README.md) | Campaña de fallos y carga, análisis de garantías, comparación Ray/nativo y preparación de la defensa. |

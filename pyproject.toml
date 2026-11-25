@@ -1,0 +1,64 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dvs"
+version = "0.1.0"
+description = "Motor distribuido de búsqueda vectorial (proyecto de Sistemas Distribuidos 2026)"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+# Runtime común a F1 y F2 (sin Ray).
+dependencies = [
+    "numpy>=2.5,<3",
+    "pydantic>=2.14,<3",
+    "pyyaml>=6.0,<7",
+    "fastapi>=0.165,<1",
+    "uvicorn[standard]>=0.54,<1",
+    "httpx>=0.28,<1",
+]
+
+[project.optional-dependencies]
+# Fase 1. Versión EXACTA: todos los nodos del clúster (y la imagen Docker) deben usar la misma.
+ray = ["ray[default]==2.60.1"]
+dev = [
+    "pytest>=9.2,<10",
+    "pytest-asyncio>=1.5,<2",
+    "hypothesis>=6.170,<7",
+    "ruff>=0.17,<0.18",
+    "mypy>=2.4,<3",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dvs"]
+
+# ───────────────────────── pytest ─────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-ra --strict-markers"
+markers = [
+    "integration: necesita Ray local (make test-integration)",
+    "faults: necesita inyector de fallos; se salta si no hay",
+]
+
+# ───────────────────────── ruff ─────────────────────────
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "."]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+ignore = ["RUF001", "RUF002", "RUF003"]  # permite tildes y comillas tipográficas en docstrings y comentarios
+
+[tool.ruff.lint.isort]
+known-first-party = ["dvs", "tools", "experiments"]
+
+# ───────────────────────── mypy ─────────────────────────
+[tool.mypy]
+python_version = "3.12"
+files = ["src/dvs/core", "src/dvs/coordinator"]
+strict = true

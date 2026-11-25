@@ -48,3 +48,7 @@ orientacion_proyecto/
 # Guías locales de trabajo (spec-driven development, no se versionan)
 .sdd/
 CLAUDE.md
+
+# Datos generados y resultados de experimentos (se regeneran con make data / make exp)
+data/
+runs/
