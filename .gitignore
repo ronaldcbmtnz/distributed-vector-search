@@ -45,3 +45,6 @@ htmlcov/
 .ruff_cache/
 
 orientacion_proyecto/
+# Guías locales de trabajo (spec-driven development, no se versionan)
+.sdd/
+CLAUDE.md
