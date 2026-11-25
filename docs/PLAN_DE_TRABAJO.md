@@ -60,15 +60,15 @@
 
 ### F1-A · Núcleo puro de shard, sin red (reutilizable en F2) — [A]
 
-- [ ] T101 [A] — Hash estable `(colección, id) → shard` (blake2b) · cubre: D01 · hecho cuando: test de estabilidad entre procesos y de uniformidad (dep: T008)
-- [ ] T102 [A] — Validación de entrada: dimensión, NaN/Inf, metadatos, límites, `k`, complejidad del filtro · cubre: REQ-1.6, REQ-2.6 [P]
-- [ ] T103 [A] — Lenguaje de filtros (igualdad, `$in`, rango, AND) y su evaluación · cubre: REQ-2.3 [P]
-- [ ] T104 [A] — `ShardCore`: índice exacto + metadatos · cubre: REQ-1.1–1.5, REQ-1.7, REQ-2.5 (dep: T102, T103)
+- [x] T101 [A] — Hash estable `(colección, id) → shard` (blake2b) · cubre: D01 · hecho cuando: test de estabilidad entre procesos y de uniformidad (dep: T008)
+- [x] T102 [A] — Validación de entrada: dimensión, NaN/Inf, metadatos, límites, `k`, complejidad del filtro · cubre: REQ-1.6, REQ-2.6 [P]
+- [x] T103 [A] — Lenguaje de filtros (igualdad, `$in`, rango, AND) y su evaluación · cubre: REQ-2.3 [P]
+- [x] T104 [A] — `ShardCore`: índice exacto + metadatos · cubre: REQ-1.1–1.5, REQ-1.7, REQ-2.5 (dep: T102, T103)
   - Operaciones: upsert, insert y update condicionales, delete y get.
   - Búsqueda top-k con pre-filtrado.
-- [ ] T105 [A] — Tabla de deduplicación por `request_id`, incluido el conflicto por contenido distinto · cubre: REQ-5.1–5.3 (dep: T104)
-- [ ] T106 [A] — Merge determinista de top-k locales por `(dist, id)` · cubre: REQ-2.1, 2.2, 2.4 · hecho cuando: test de propiedad frente a fuerza bruta global y test de permutaciones [P]
-- [ ] T107 [A] — Contadores de posición: `applied_index` por shard y token de escritura · cubre: REQ-4.4 (dep: T104)
+- [x] T105 [A] — Tabla de deduplicación por `request_id`, incluido el conflicto por contenido distinto · cubre: REQ-5.1–5.3 (dep: T104)
+- [x] T106 [A] — Merge determinista de top-k locales por `(dist, id)` · cubre: REQ-2.1, 2.2, 2.4 · hecho cuando: test de propiedad frente a fuerza bruta global y test de permutaciones [P]
+- [x] T107 [A] — Contadores de posición: `applied_index` por shard y token de escritura · cubre: REQ-4.4 (dep: T104)
 
 ### F1-B · Sistema sobre Ray — [A]
 
