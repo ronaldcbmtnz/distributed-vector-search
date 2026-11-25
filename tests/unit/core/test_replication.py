@@ -87,6 +87,16 @@ def test_commit_notice_before_entry_is_applied_on_receive() -> None:
     assert b.ready_to_apply() == [e1]
 
 
+def test_holds_reports_applied_and_buffered() -> None:
+    p = PrimaryLog("p", quorum=1)
+    e1, e2, e3 = p.append(_op(1)), p.append(_op(2)), p.append(_op(3))
+    b = BackupLog()
+    b.receive([e1, e3], commit_seq=1)
+    b.ready_to_apply()
+    assert b.holds(1) and b.holds(3) and not b.holds(2)
+    assert e2.seq == 2
+
+
 def test_receive_can_carry_commit_seq() -> None:
     p = PrimaryLog("p", quorum=1)
     e1, e2 = p.append(_op(1)), p.append(_op(2))

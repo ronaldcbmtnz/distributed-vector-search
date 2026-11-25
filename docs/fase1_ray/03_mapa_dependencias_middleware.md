@@ -30,7 +30,23 @@
 - **Política de degradación:** plazos, parciales y formato de respuesta.
 - **Merge determinista** y semántica de visibilidad.
 
+## Semántica de Ray observada (sonda T110a)
+
+Medido con Ray 2.60.1 en una sola máquina. Reproducible con `make test-integration`
+(`tests/integration/test_ray_semantics.py`).
+
+| Pregunta | Observado | Consecuencia en el diseño |
+|---|---|---|
+| ¿Respeta Ray el orden de las llamadas de un mismo llamador a un actor **async**? | **No.** En 2000 llamadas aparecen inversiones de orden, incluso en métodos sin `await` | Los backups guardan las entradas en un buffer por `seq` y solo aplican de forma contigua (`BackupLog`). Sin ese buffer, el orden total por shard se rompería. |
+| ¿Qué estado queda tras reiniciar un actor (`max_restarts > 0`)? | El actor vuelve con `was_current_actor_reconstructed = True` y el **estado vacío**: 0,12 s tras `ray.kill`, 1,76 s tras `kill -9` del proceso | Ray da disponibilidad del *proceso*, no de los *datos*. La réplica reconstruida se marca **no lista** y no sirve lecturas. En F2 harán falta persistencia y puesta al día. |
+| ¿Qué ve el llamador mientras el actor se reinicia? | `ActorUnavailableError` durante el hueco | El transporte lo trata como `ReplicaUnreachable` → failover a otra réplica |
+| ¿Y sin reinicios (`max_restarts = 0`)? | `ActorDiedError` (subclase de `RayActorError`) al instante | Ídem: la réplica queda fuera y el coordinador usa las demás |
+| ¿Un timeout local (`asyncio.wait_for`) detiene el trabajo remoto? | **No.** El actor sigue ejecutando la llamada | El transporte llama a `ray.cancel` cuando vence el timeout o se cancela la espera |
+| ¿Funciona `ray.cancel` sobre una tarea async en curso? | Sí: el actor recibe `CancelledError` y el llamador `TaskCancelledError` | Los hedges perdedores y lo pendiente al vencer el plazo se cancelan de verdad |
+| ¿Hay backpressure por handle (`max_pending_calls`)? | Sí: `PendingCallsLimitExceeded` al **enviar** la llamada, en el lado del llamador | Se mapea a `ReplicaOverloaded` → `overloaded` (429) en escrituras, otra réplica en lecturas |
+| ¿Es idempotente crear un actor con nombre y `get_if_exists=True`? | Sí: devuelve el mismo actor con su estado | El `Catalog` puede reejecutar el arranque sin duplicar réplicas |
+
 ## Observaciones del experimento
 
-_(completar con lo observado en T121: qué hizo realmente Ray ante el crash, la lentitud y la
-concurrencia, y en qué difirió de lo esperado)_
+_(completar con lo observado en T121b: qué hizo realmente Ray ante el crash, la lentitud y la
+concurrencia en el despliegue con varios nodos, y en qué difirió de lo esperado)_

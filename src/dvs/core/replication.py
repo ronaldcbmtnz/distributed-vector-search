@@ -90,6 +90,10 @@ class BackupLog:
             self.advance_commit(commit_seq)
         return held
 
+    def holds(self, seq: int) -> bool:
+        """True if `seq` is already applied or buffered."""
+        return seq <= self.applied_seq or seq in self._buffer
+
     def advance_commit(self, commit_seq: int) -> None:
         if commit_seq > self.commit_seq:
             self.commit_seq = commit_seq

@@ -72,8 +72,8 @@
 
 ### F1-B · Sistema sobre Ray — [A]
 
-- [ ] T110 [A] — Actor `ShardReplica` que envuelve `ShardCore`; named actors; `max_restarts` configurable · cubre: D12 (dep: T104–T107)
-- [ ] T111 [A] — Actor `Catalog` · cubre: C3 (dep: T110)
+- [x] T110 [A] — Actor `ShardReplica` que envuelve `ShardCore`; named actors; `max_restarts` configurable · cubre: D12 (dep: T104–T107)
+- [x] T111 [A] — Actor `Catalog` · cubre: C3 (dep: T110)
   - Carga las colecciones (dimensión, métrica, permisos) desde el **fichero de configuración**.
   - Publica el mapa de shards versionado: shard → primario + backups.
 - [x] T112 [A] — Coordinador scatter-gather · cubre: REQ-3.1–3.5, D09 (dep: T110)
@@ -82,7 +82,7 @@
   - `partial` / `missing_shards` / `coverage` y `allow_partial`.
   - Cancelación de lo pendiente.
 - [x] T113 [A] — Camino de escritura: enrutar al responsable del shard, `request_id` y token · cubre: HU-1, HU-5 (dep: T110)
-- [ ] T114 [A] — **Replicación primario → backups en memoria (obligatoria, C2)** · cubre: HU-4, REQ-6.1 · hecho cuando: test que muestra la ventana `stale` con `eventual` y su desaparición con RYW/`strong` (dep: T113)
+- [x] T114 [A] — **Replicación primario → backups en memoria (obligatoria, C2)** · cubre: HU-4, REQ-6.1 · hecho cuando: test que muestra la ventana `stale` con `eventual` y su desaparición con RYW/`strong` (dep: T113)
   - RF configurable, por defecto 3. Confirmación con W acks (por defecto mayoría).
   - Los niveles `eventual`, `read_your_writes` y `strong` funcionan.
   - Respuesta `stale` sin espera.
@@ -113,7 +113,7 @@
 
 ### F1-C · Experimento y documentos de la entrega
 
-- [ ] T120a [A] — Ganchos de fallos dentro de Ray: CLI `python -m dvs.ray_impl.faults` con `info`/`delay`/`clear`/`kill` (REPARTO §3.4) (dep: T110)
+- [x] T120a [A] — Ganchos de fallos dentro de Ray: CLI `python -m dvs.ray_impl.faults` con `info`/`delay`/`clear`/`kill` (REPARTO §3.4) (dep: T110)
 - [ ] T120b [B] — Fallos a nivel de Docker/SO + runner de escenarios (carga + fallo + recolección, con registro en `faults.jsonl`) [P]
   - Fallos: `docker kill`, `kill -9` de un PID, `docker pause`, `tc netem` y desconexión de red.
 - [ ] T121a [B] — Harness de experimentos: generador de carga, estructura `runs/<id>/` (REPARTO §3.9) y análisis · hecho cuando: `make exp SCENARIO=e2` genera `report.md` (contra el stub primero) (dep: T010, T116)
