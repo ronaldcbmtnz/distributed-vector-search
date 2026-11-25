@@ -16,8 +16,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import operator
+import os
 import shutil
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -63,15 +66,33 @@ def _validate_name(name: str) -> str:
     value = name.strip()
     if not value:
         raise ValueError("name must be a non-empty string")
-    if any(ch in value for ch in ("/", "\\")):
-        raise ValueError("name must not contain path separators")
+    if value in {".", ".."} or any(ch in value for ch in ("/", "\\", ":")):
+        raise ValueError("name must be a single safe directory name")
     return value
 
 
 def _validate_positive_int(value: int, field_name: str) -> int:
-    if isinstance(value, bool) or value <= 0:
+    if isinstance(value, bool):
         raise ValueError(f"{field_name} must be a positive integer")
-    return value
+    try:
+        normalized = operator.index(value)
+    except TypeError as exc:
+        raise ValueError(f"{field_name} must be a positive integer") from exc
+    if normalized <= 0:
+        raise ValueError(f"{field_name} must be a positive integer")
+    return normalized
+
+
+def _validate_seed(seed: int) -> int:
+    if isinstance(seed, bool):
+        raise ValueError("seed must be a non-negative integer")
+    try:
+        normalized = operator.index(seed)
+    except TypeError as exc:
+        raise ValueError("seed must be a non-negative integer") from exc
+    if normalized < 0:
+        raise ValueError("seed must be a non-negative integer")
+    return normalized
 
 
 def validate_params(params: DatasetParams) -> DatasetParams:
@@ -92,7 +113,7 @@ def validate_params(params: DatasetParams) -> DatasetParams:
 
     return DatasetParams(
         name=name,
-        seed=int(params.seed),
+        seed=_validate_seed(params.seed),
         n=n,
         dim=dim,
         n_clusters=n_clusters,
@@ -168,9 +189,47 @@ def compute_exact_topk(
     metric: str,
     k: int,
 ) -> tuple[npt.NDArray[np.int64], npt.NDArray[np.float64]]:
+    vectors = np.asarray(vectors)
+    queries = np.asarray(queries)
+    ids = np.asarray(ids)
+    if vectors.ndim != 2 or vectors.shape[0] == 0 or vectors.shape[1] == 0:
+        raise ValueError("vectors must be a non-empty 2D array")
+    if queries.ndim != 2 or queries.shape[0] == 0:
+        raise ValueError("queries must be a non-empty 2D array")
+    if queries.shape[1] != vectors.shape[1]:
+        raise ValueError("queries and vectors must have the same dimension")
+    if ids.ndim != 1 or ids.shape[0] != vectors.shape[0]:
+        raise ValueError("ids must be a 1D array with one ID per vector")
+    if not np.issubdtype(ids.dtype, np.integer):
+        raise ValueError("ids must contain integers")
+    if np.unique(ids).size != ids.size:
+        raise ValueError("ids must be unique")
+    vectors_are_real = np.issubdtype(vectors.dtype, np.integer) or np.issubdtype(
+        vectors.dtype, np.floating
+    )
+    queries_are_real = np.issubdtype(queries.dtype, np.integer) or np.issubdtype(
+        queries.dtype, np.floating
+    )
+    if not vectors_are_real or not queries_are_real:
+        raise ValueError("vectors and queries must contain real numeric values")
+    if not np.isfinite(vectors).all() or not np.isfinite(queries).all():
+        raise ValueError("vectors and queries must contain only finite values")
+    if isinstance(k, bool):
+        raise ValueError("k must be a positive integer no greater than the number of vectors")
+    try:
+        k = operator.index(k)
+    except TypeError as exc:
+        raise ValueError(
+            "k must be a positive integer no greater than the number of vectors"
+        ) from exc
+    if k <= 0 or k > vectors.shape[0]:
+        raise ValueError("k must be a positive integer no greater than the number of vectors")
+
     metric_canonical = _normalize_metric(metric)
     vectors64 = vectors.astype(np.float64)
     queries64 = queries.astype(np.float64)
+    if not np.isfinite(vectors64).all() or not np.isfinite(queries64).all():
+        raise ValueError("vectors and queries must be representable as finite float64 values")
 
     n_queries = queries64.shape[0]
     out_ids = np.empty((n_queries, k), dtype=np.int64)
@@ -194,7 +253,8 @@ def compute_exact_topk(
                 raise ValueError("cosine metric requires non-zero queries")
             dots = vectors64 @ q
             denom = vec_norms * q_norm  # type: ignore[operator]
-            dists = (1.0 - (dots / denom)).astype(np.float64)
+            cosine = np.clip(dots / denom, -1.0, 1.0)
+            dists = (1.0 - cosine).astype(np.float64)
 
         # Deterministic ordering by (distance, id).
         ranked = np.lexsort((ids, dists))[:k]
@@ -240,19 +300,42 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
 
 
 def write_dataset(bundle: DatasetBundle, target_dir: Path) -> None:
-    target_dir.mkdir(parents=True, exist_ok=True)
+    target_dir = Path(target_dir)
+    target_dir.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=".stage-", dir=target_dir.parent) as temp:
+        staged = Path(temp) / target_dir.name
+        if target_dir.exists():
+            if not target_dir.is_dir():
+                raise ValueError(f"dataset target is not a directory: {target_dir}")
+            shutil.copytree(target_dir, staged)
+        else:
+            staged.mkdir()
 
-    _write_json(target_dir / "manifest.json", bundle.manifest)
-    np.save(target_dir / "vectors.npy", bundle.vectors)
-    (target_dir / "ids.txt").write_text("\n".join(str(int(x)) for x in bundle.ids) + "\n", encoding="utf-8")
+        _write_json(staged / "manifest.json", bundle.manifest)
+        np.save(staged / "vectors.npy", bundle.vectors)
+        (staged / "ids.txt").write_text(
+            "\n".join(str(int(x)) for x in bundle.ids) + "\n", encoding="utf-8"
+        )
+        with (staged / "metadata.jsonl").open("w", encoding="utf-8", newline="\n") as fp:
+            for row in bundle.metadata:
+                fp.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+        np.save(staged / "queries.npy", bundle.queries)
+        np.save(staged / "gt_ids.npy", bundle.gt_ids)
+        np.save(staged / "gt_dist.npy", bundle.gt_dist)
 
-    with (target_dir / "metadata.jsonl").open("w", encoding="utf-8") as fp:
-        for row in bundle.metadata:
-            fp.write(json.dumps(row, ensure_ascii=False) + "\n")
-
-    np.save(target_dir / "queries.npy", bundle.queries)
-    np.save(target_dir / "gt_ids.npy", bundle.gt_ids)
-    np.save(target_dir / "gt_dist.npy", bundle.gt_dist)
+        # Keep unknown files already in the dataset directory, and replace the published
+        # directory only after every artifact has been written successfully.
+        backup = Path(temp) / f"{target_dir.name}.previous"
+        if target_dir.exists():
+            os.replace(target_dir, backup)
+        try:
+            os.replace(staged, target_dir)
+        except OSError:
+            if backup.exists() and not target_dir.exists():
+                os.replace(backup, target_dir)
+            raise
+        if backup.exists():
+            shutil.rmtree(backup)
 
 
 def generate_and_write(params: DatasetParams) -> Path:
