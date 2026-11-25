@@ -41,7 +41,7 @@
 - [x] T004b [A] — Cerrar las decisiones menores de F1: C4 = métricas L2 + coseno; C5 = dedup sin expiración
 - [ ] T004c [A] — Cerrar C1 (ventana de failover acotada): solo afecta a F2 (ver T007)
 - [x] T005 [A] — Aprobar constitución, spec del contrato y plan técnico de F1
-- [ ] T005b [A+B] — Instalar Docker Engine + Compose en la máquina de cada uno · hecho cuando: `docker compose version` responde sin `sudo` [P]
+- [x] T005b [A+B] — Instalar Docker Engine + Compose en la máquina de cada uno · hecho cuando: `docker compose version` responde sin `sudo` [P]
 - [ ] T006 [A+B] — Confirmar equipo: nombres completos, grupos y reparto de áreas · hecho cuando: tabla en `docs/README.md` y nombre en `REPARTO_TAREAS.md`
 - [ ] T007 [A] — Preguntar al profesor (si hace falta): ¿una ventana acotada sin escrituras durante el failover cuenta como "mantener la funcionalidad"? [P]
 - [x] T008 [A] — Andamiaje del repo. **Va primero: B parte de aquí** (dep: T005)
@@ -51,7 +51,7 @@
 
   Hecho cuando: `make test` pasa con un test vacío.
 - [ ] T009 [B] — `ai_use.yaml` en la raíz, siguiendo el formato de la metodología, y aviso de terceros en el `README.md` [P]
-- [ ] T010 [B] — Generador de datos (formato en REPARTO §3.5) · hecho cuando: `make data` reproduce los mismos ficheros [P]
+- [x] T010 [B] — Generador de datos (formato en REPARTO §3.5) · hecho cuando: `make data` reproduce los mismos ficheros [P]
   - Vectores sintéticos con semilla (gaussianas por cluster).
   - Metadatos sintéticos.
   - Ground truth por fuerza bruta.
@@ -96,7 +96,7 @@
 
 ### F1-B' · Cliente, contrato y despliegue — [B] (independiente de F1-A/F1-B hasta J1)
 
-- [ ] T119b [B] — **Servidor simulado del contrato** en `tools/stub_server/` (en memoria, sin distribución) para desarrollar sin depender de A · hecho cuando: los tests de contrato sin fallos pasan contra él (dep: T008)
+- [x] T119b [B] — **Servidor simulado del contrato** en `tools/stub_server/` (en memoria, sin distribución) para desarrollar sin depender de A · hecho cuando: los tests de contrato sin fallos pasan contra él (dep: T008)
 - [ ] T116 [B] — SDK/CLI del cliente · cubre: REQ-7.7, 8.3, 10.4 · hecho cuando: tests del SDK verdes contra el stub (dep: T119b)
   - Genera `request_id`.
   - Reintentos con backoff y jitter.

@@ -61,7 +61,7 @@ data: ## [B] Genera el dataset sintético con semilla (T010)
 	"$(PY)" -m experiments.data_gen --name demo_cos --metric cosine --seed $(DATA_SEED) --n $(DATA_N) --dim $(DATA_DIM) --n-clusters $(DATA_CLUSTERS) --n-queries $(DATA_QUERIES) --k-gt $(DATA_K) --output-dir "$(DATA_DIR)"
 
 stub: ## [B] Levanta el servidor simulado del contrato en :8080 (T119b)
-	@echo "pendiente: T119b [B]"; exit 1
+	$(PY) -m tools.stub_server
 
 test-contract: ## [B] Tests de contrato contra DVS_BASE_URL (T119)
 	$(PY) -m pytest tests/contract
