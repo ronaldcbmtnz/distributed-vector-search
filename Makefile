@@ -4,6 +4,13 @@
 VENV   ?= .venv
 PY     := $(VENV)/bin/python
 PIP    := $(VENV)/bin/pip
+DATA_DIR ?= data
+DATA_SEED ?= 20261125
+DATA_N ?= 5000
+DATA_DIM ?= 128
+DATA_CLUSTERS ?= 32
+DATA_QUERIES ?= 200
+DATA_K ?= 10
 
 .DEFAULT_GOAL := help
 .PHONY: help venv install test lint format typecheck check clean \
@@ -50,7 +57,8 @@ run-ray-local: ## [A] Gateway + Ray local (en proceso) en :8080; logs en runs/lo
 
 # ───────────────────────── B · plataforma y verificación ─────────────────────────
 data: ## [B] Genera el dataset sintético con semilla (T010)
-	@echo "pendiente: T010 [B]"; exit 1
+	"$(PY)" -m experiments.data_gen --name demo --metric L2 --seed $(DATA_SEED) --n $(DATA_N) --dim $(DATA_DIM) --n-clusters $(DATA_CLUSTERS) --n-queries $(DATA_QUERIES) --k-gt $(DATA_K) --output-dir "$(DATA_DIR)"
+	"$(PY)" -m experiments.data_gen --name demo_cos --metric cosine --seed $(DATA_SEED) --n $(DATA_N) --dim $(DATA_DIM) --n-clusters $(DATA_CLUSTERS) --n-queries $(DATA_QUERIES) --k-gt $(DATA_K) --output-dir "$(DATA_DIR)"
 
 stub: ## [B] Levanta el servidor simulado del contrato en :8080 (T119b)
 	@echo "pendiente: T119b [B]"; exit 1
