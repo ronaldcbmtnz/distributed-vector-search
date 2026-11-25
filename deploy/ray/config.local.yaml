@@ -1,0 +1,59 @@
+# Configuración para ejecutar en LOCAL (make run-ray-local): un solo nodo Ray en proceso.
+# Igual que config.ray.yaml salvo el placement. Claves solo de desarrollo/test.
+
+cluster:
+  num_shards: 4            # S. Cada réplica es un proceso Ray: 4 × 3 = 12 procesos.
+  replication_factor: 3    # RF
+  write_quorum: 2          # W (cuenta al primario)
+  placement: pack           # un solo nodo local: STRICT_SPREAD no es posible
+
+timeouts_ms:
+  search_deadline_default: 300
+  search_deadline_min: 50
+  search_deadline_max: 5000
+  attempt: 120             # timeout por intento → hedge a otra réplica
+  write: 2000              # sin W acks a tiempo → 504 deadline_exceeded (resultado desconocido)
+  suspect_ttl: 2000        # sospecha local del gateway (solo enrutamiento)
+  map_cache_ttl: 2000
+
+limits:
+  k_max: 100
+  max_batch: 1000
+  max_id_bytes: 128
+  max_request_id_bytes: 128
+  max_metadata_bytes: 4096
+  max_metadata_keys: 32
+  max_key_len: 64
+  max_list_len: 32
+  max_filter_clauses: 16
+  max_in_values: 256
+
+admission:
+  search_concurrency: 64
+  write_concurrency: 256
+  rate_per_key: 500
+  burst_per_key: 1000
+
+actors:
+  max_concurrency: 64
+  max_restarts: 0          # los experimentos lo cambian (E1)
+  max_pending_calls: 1000
+  num_cpus: 0.5
+
+collections:
+  - { name: demo,     dim: 128, metric: l2 }
+  - { name: demo_cos, dim: 128, metric: cosine }
+
+api_keys:
+  # dev-key-rw
+  262f16f93b4ca5731b187d05e5cb0c986b887c6ef17f7e5f3bb55121925d186d:
+    { client: dev-rw, read: [demo, demo_cos], write: [demo, demo_cos] }
+  # dev-key-ro
+  ea057edb1a6764403bc7077265677eabfe6fd3b5fd0fbd1c069afaa2a0c6471c:
+    { client: dev-ro, read: [demo], write: [] }
+  # dev-admin
+  de72d648e29b247c1875138a7140256dbe5df3e6c9f37d592b07d9de509d2878:
+    { client: dev-admin, admin: true }
+
+fault_injection:
+  enabled: true            # solo para desarrollo y experimentos

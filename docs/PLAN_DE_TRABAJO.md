@@ -87,12 +87,12 @@
   - Los niveles `eventual`, `read_your_writes` y `strong` funcionan.
   - Respuesta `stale` sin espera.
   - Sin persistencia ni failover: la tolerancia a fallos no aplica en F1.
-- [ ] T115 [A] — API REST con FastAPI · cubre: contrato (dep: T112, T113)
+- [x] T115 [A] — API REST con FastAPI · cubre: contrato (dep: T112, T113)
   - Todas las operaciones del contrato.
   - Códigos de error del contrato.
   - API key, permisos por colección y semáforo de admisión con 429.
   - `/v1/metrics` y `/v1/admin/status` (REPARTO §3.8).
-- [ ] T117 [A] — Logs JSON estructurados (REPARTO §3.7) y métricas p50/p95/p99 en el gateway · cubre: HU-10 [P]
+- [x] T117 [A] — Logs JSON estructurados (REPARTO §3.7) y métricas p50/p95/p99 en el gateway · cubre: HU-10 [P]
 
 ### F1-B' · Cliente, contrato y despliegue — [B] (independiente de F1-A/F1-B hasta J1)
 

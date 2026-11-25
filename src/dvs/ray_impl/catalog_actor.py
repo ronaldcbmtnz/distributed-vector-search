@@ -20,6 +20,7 @@ from ray.util.scheduling_strategies import PlacementGroupSchedulingStrategy
 
 from dvs.config import Config
 from dvs.core.model import ShardInfo, ShardMap
+from dvs.obs import setup_logging
 from dvs.ray_impl.shard_actor import ShardReplica
 
 log = logging.getLogger("dvs.catalog")
@@ -34,6 +35,7 @@ def replica_actor_name(cluster: str, replica_id: str) -> str:
 @ray.remote
 class Catalog:
     def __init__(self, config: dict[str, Any], cluster: str = "dvs", detached: bool = True) -> None:
+        setup_logging("catalog")
         self.cfg = Config.model_validate(config)
         self.cluster = cluster
         self.detached = detached

@@ -41,6 +41,7 @@ from dvs.core.model import (
 )
 from dvs.core.replication import BackupLog, PrimaryLog
 from dvs.core.shard_core import ShardCore
+from dvs.obs import setup_logging
 
 log = logging.getLogger("dvs.replica")
 
@@ -63,6 +64,7 @@ class ShardReplica:
         write_timeout_s: float,
         fault_injection: bool = False,
     ) -> None:
+        setup_logging(f"replica-{replica_id.replace('/', '-')}")  # each actor is its own process
         ctx = ray.get_runtime_context()
         self.replica_id = replica_id
         self.shard = shard
@@ -98,6 +100,22 @@ class ShardReplica:
                 "reconstructed": self.reconstructed,
             },
         )
+        if self.reconstructed:
+            log.warning(
+                "rebuilt by the runtime with empty state: not ready, will not serve",
+                extra={"event": "replica.not_ready", "replica_id": replica_id, "shard": shard},
+            )
+
+    def _ctx(self, **fields: Any) -> dict[str, Any]:
+        """Common log fields (docs/REPARTO_TAREAS.md §3.7)."""
+        return {
+            "replica_id": self.replica_id,
+            "shard": self.shard,
+            "role": self.role,
+            "incarnation": self.incarnation,
+            "applied_seq": self.core.applied_seq,
+            **fields,
+        }
 
     # ───────────────────────────── control plane ─────────────────────────────
 
@@ -144,6 +162,12 @@ class ShardReplica:
                 pending.append(e)
                 continue
             if prev is not None:
+                log.info(
+                    "dedup hit",
+                    extra=self._ctx(
+                        event="write.dedup_hit", request_id=op.request_id, seq=prev.seq
+                    ),
+                )
                 pending.append(prev)
                 continue
             inflight = self._inflight.get(op.request_id)
@@ -174,6 +198,10 @@ class ShardReplica:
                 if p.done():
                     outcomes.append(p.result())
                 else:  # stays pending: may still commit; a retry with the same request_id finds it
+                    log.warning(
+                        "quorum not reached in time",
+                        extra=self._ctx(event="write.timeout", commit_seq=self.plog.commit_seq),
+                    )
                     outcomes.append(DeadlineExceeded("quorum not reached in time; outcome unknown"))
             else:
                 outcomes.append(p)
@@ -201,6 +229,16 @@ class ShardReplica:
             return
         for e in entries:
             result = self.core.apply(e)
+            log.info(
+                "committed",
+                extra=self._ctx(
+                    event="write.committed",
+                    seq=e.seq,
+                    commit_seq=e.seq,
+                    request_id=e.op.request_id,
+                    status=result.status,
+                ),
+            )
             self._inflight.pop(e.op.request_id, None)
             fut = self._waiters.pop(e.seq, None)
             if fut is not None and not fut.done():
@@ -229,6 +267,15 @@ class ShardReplica:
     def _apply_ready(self) -> None:
         for e in self.blog.ready_to_apply():
             self.core.apply(e)
+            log.debug(
+                "applied",
+                extra=self._ctx(
+                    event="write.applied",
+                    seq=e.seq,
+                    commit_seq=self.blog.commit_seq,
+                    request_id=e.op.request_id,
+                ),
+            )
 
     # ───────────────────────────── reads ─────────────────────────────
 

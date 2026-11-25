@@ -44,8 +44,9 @@ clean: ## Borra cachés
 test-integration: ## [A] Tests de integración con Ray local
 	$(PY) -m pytest tests/integration -m integration
 
-run-ray-local: ## [A] Gateway + Ray local en :8080 (T115)
-	@echo "pendiente: T115 [A]"; exit 1
+run-ray-local: ## [A] Gateway + Ray local (en proceso) en :8080; logs en runs/local
+	DVS_CONFIG=deploy/ray/config.local.yaml DVS_RAY_ADDRESS=local DVS_RUN_DIR=runs/local \
+		$(PY) -m uvicorn dvs.api.main_ray:app --host 127.0.0.1 --port 8080
 
 # ───────────────────────── B · plataforma y verificación ─────────────────────────
 data: ## [B] Genera el dataset sintético con semilla (T010)
