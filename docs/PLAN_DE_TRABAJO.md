@@ -76,12 +76,12 @@
 - [ ] T111 [A] — Actor `Catalog` · cubre: C3 (dep: T110)
   - Carga las colecciones (dimensión, métrica, permisos) desde el **fichero de configuración**.
   - Publica el mapa de shards versionado: shard → primario + backups.
-- [ ] T112 [A] — Coordinador scatter-gather · cubre: REQ-3.1–3.5, D09 (dep: T110)
+- [x] T112 [A] — Coordinador scatter-gather · cubre: REQ-3.1–3.5, D09 (dep: T110)
   - Plazo global y timeout por intento.
   - Hedge si RF > 1.
   - `partial` / `missing_shards` / `coverage` y `allow_partial`.
   - Cancelación de lo pendiente.
-- [ ] T113 [A] — Camino de escritura: enrutar al responsable del shard, `request_id` y token · cubre: HU-1, HU-5 (dep: T110)
+- [x] T113 [A] — Camino de escritura: enrutar al responsable del shard, `request_id` y token · cubre: HU-1, HU-5 (dep: T110)
 - [ ] T114 [A] — **Replicación primario → backups en memoria (obligatoria, C2)** · cubre: HU-4, REQ-6.1 · hecho cuando: test que muestra la ventana `stale` con `eventual` y su desaparición con RYW/`strong` (dep: T113)
   - RF configurable, por defecto 3. Confirmación con W acks (por defecto mayoría).
   - Los niveles `eventual`, `read_your_writes` y `strong` funcionan.
