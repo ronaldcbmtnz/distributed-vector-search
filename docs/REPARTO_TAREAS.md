@@ -113,7 +113,7 @@ make help                                # lista los targets, con su dueño
 | Paquete | `pip install -e .` del repo dentro de la imagen |
 | Ray head | `ray start --head --port=6379 --num-cpus=0 --dashboard-host=0.0.0.0 --block` (dashboard en :8265) |
 | Workers (×3) | `ray start --address=ray-head:6379 --num-cpus=8 --block` |
-| Gateway | `ray start --address=ray-head:6379 --num-cpus=0` y luego `uvicorn dvs.api.main_ray:app --host 0.0.0.0 --port 8080` |
+| Gateway | `DVS_RAY_ADDRESS=ray://ray-head:10001 uvicorn dvs.api.main_ray:app --host 0.0.0.0 --port 8080` vía Ray Client; no ejecuta `ray start` (T118 comprueba cuatro nodos: head + 3 workers) |
 | Configuración | Variable `DVS_CONFIG` = ruta del YAML (A entrega `deploy/ray/config.ray.yaml`; B lo monta) |
 | Evidencia | Volumen `./runs` montado en `/runs` en todos los contenedores; `DVS_RUN_DIR=/runs/<run_id>` |
 | Recursos | `shm_size: 2gb` en todos los contenedores Ray; `cap_add: [NET_ADMIN]` en los workers (para `tc netem`) |

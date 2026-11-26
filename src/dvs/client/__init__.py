@@ -1,5 +1,15 @@
-"""Reference client SDK and CLI: request ids, retries with backoff+jitter, gateway failover,
-RYW tokens and history recording.
+"""HTTP clients for the Distributed Vector Search API."""
 
-Owner: B. Depends only on the HTTP contract (docs/fase1_ray/01_contrato_api.md).
-"""
+from dvs.client.client import AsyncDVSClient, DVSClient
+from dvs.client.errors import APIError, ClientError, ProtocolError, TransportError
+from dvs.client.retry import RetryPolicy
+
+__all__ = [
+    "APIError",
+    "AsyncDVSClient",
+    "ClientError",
+    "DVSClient",
+    "ProtocolError",
+    "RetryPolicy",
+    "TransportError",
+]

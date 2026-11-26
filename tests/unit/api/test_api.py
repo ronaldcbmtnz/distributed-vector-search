@@ -151,9 +151,9 @@ async def test_invalid_writes_are_400(client: httpx.AsyncClient, body: dict[str,
     assert r.status_code == 400 and r.json()["error"]["code"] == "invalid_argument"
 
 
-async def test_unknown_collection_without_permission_is_403(client: httpx.AsyncClient) -> None:
+async def test_unknown_collection_is_not_found(client: httpx.AsyncClient) -> None:
     r = await client.post("/v1/collections/zzz/search", json={"vector": [0, 0, 0, 0]}, headers=RW)
-    assert r.status_code == 403  # sin permiso: no se revela si existe
+    assert r.status_code == 404 and r.json()["error"]["code"] == "not_found"
 
 
 async def test_batch_reports_per_item(client: httpx.AsyncClient) -> None:

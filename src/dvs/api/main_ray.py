@@ -2,7 +2,7 @@
 
 Environment (docs/REPARTO_TAREAS.md §3.3):
   DVS_CONFIG       path of the YAML configuration (required)
-  DVS_RAY_ADDRESS  "auto" (join the running cluster, default) or "local" (start an in-process Ray)
+  DVS_RAY_ADDRESS  Ray address (for example "ray://ray-head:10001"), "auto", or "local"
   DVS_NAMESPACE    Ray namespace (default "dvs")
   DVS_CLUSTER      cluster name prefix for actor names (default "dvs")
   DVS_RUN_DIR      if set, JSON logs go to $DVS_RUN_DIR/logs/

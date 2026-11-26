@@ -18,9 +18,12 @@ dependencies = [
     "httpx>=0.28,<1",
 ]
 
+[project.scripts]
+dvs = "dvs.client.cli:main"
+
 [project.optional-dependencies]
 # Fase 1. Versión EXACTA: todos los nodos del clúster (y la imagen Docker) deben usar la misma.
-ray = ["ray[default]==2.60.1"]
+ray = ["ray[default,client]==2.60.1"]
 dev = [
     "pytest>=9.2,<10",
     "pytest-asyncio>=1.5,<2",

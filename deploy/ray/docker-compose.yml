@@ -1,0 +1,141 @@
+name: dvs-f1
+
+services:
+  ray-head:
+    image: dvs-ray:2.60.1-py312
+    build:
+      context: ../..
+      dockerfile: deploy/ray/Dockerfile
+    command:
+      - ray
+      - start
+      - --head
+      - --port=6379
+      - --num-cpus=0
+      - --dashboard-host=0.0.0.0
+      - --ray-client-server-port=10001
+      - --block
+    init: true
+    restart: unless-stopped
+    shm_size: 2gb
+    ports:
+      - "8265:8265"
+    environment: &ray_environment
+      DVS_CONFIG: /workspace/deploy/ray/config.ray.yaml
+      DVS_RUN_DIR: /runs/${DVS_RUN_ID:-compose}
+      PYTHONUNBUFFERED: "1"
+    volumes: &ray_volumes
+      - ../../runs:/runs
+      - ./config.ray.yaml:/workspace/deploy/ray/config.ray.yaml:ro
+    networks:
+      - dvs
+    healthcheck:
+      test: ["CMD", "ray", "health-check", "--address=127.0.0.1:6379"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  ray-worker-1:
+    image: dvs-ray:2.60.1-py312
+    command: ["ray", "start", "--address=ray-head:6379", "--num-cpus=8", "--block"]
+    init: true
+    restart: unless-stopped
+    shm_size: 2gb
+    cap_add:
+      - NET_ADMIN
+    environment: *ray_environment
+    volumes: *ray_volumes
+    networks:
+      - dvs
+    depends_on:
+      ray-head:
+        condition: service_healthy
+    healthcheck: &worker_healthcheck
+      test: ["CMD", "python", "/workspace/deploy/ray/check_cluster.py", "--expected-nodes", "4"]
+      interval: 20s
+      timeout: 20s
+      retries: 30
+      start_period: 60s
+
+  ray-worker-2:
+    image: dvs-ray:2.60.1-py312
+    command: ["ray", "start", "--address=ray-head:6379", "--num-cpus=8", "--block"]
+    init: true
+    restart: unless-stopped
+    shm_size: 2gb
+    cap_add:
+      - NET_ADMIN
+    environment: *ray_environment
+    volumes: *ray_volumes
+    networks:
+      - dvs
+    depends_on:
+      ray-head:
+        condition: service_healthy
+    healthcheck: *worker_healthcheck
+
+  ray-worker-3:
+    image: dvs-ray:2.60.1-py312
+    command: ["ray", "start", "--address=ray-head:6379", "--num-cpus=8", "--block"]
+    init: true
+    restart: unless-stopped
+    shm_size: 2gb
+    cap_add:
+      - NET_ADMIN
+    environment: *ray_environment
+    volumes: *ray_volumes
+    networks:
+      - dvs
+    depends_on:
+      ray-head:
+        condition: service_healthy
+    healthcheck: *worker_healthcheck
+
+  gateway:
+    image: dvs-ray:2.60.1-py312
+    command:
+      - python
+      - -m
+      - uvicorn
+      - dvs.api.main_ray:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+    init: true
+    restart: unless-stopped
+    shm_size: 2gb
+    ports:
+      - "${DVS_GATEWAY_PORT:-8080}:8080"
+    environment:
+      <<: *ray_environment
+      DVS_RAY_ADDRESS: ray://ray-head:10001
+      DVS_NAMESPACE: dvs
+      DVS_CLUSTER: dvs
+    volumes: *ray_volumes
+    networks:
+      - dvs
+    depends_on:
+      ray-head:
+        condition: service_healthy
+      ray-worker-1:
+        condition: service_healthy
+      ray-worker-2:
+        condition: service_healthy
+      ray-worker-3:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; r=urllib.request.urlopen('http://127.0.0.1:8080/v1/health', timeout=3); raise SystemExit(0 if r.status == 200 else 1)"
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+networks:
+  dvs:
+    driver: bridge

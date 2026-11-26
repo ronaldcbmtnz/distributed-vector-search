@@ -11,6 +11,7 @@ DATA_DIM ?= 128
 DATA_CLUSTERS ?= 32
 DATA_QUERIES ?= 200
 DATA_K ?= 10
+COMPOSE ?= docker compose -f deploy/ray/docker-compose.yml
 
 .DEFAULT_GOAL := help
 .PHONY: help venv install test lint format typecheck check clean \
@@ -67,10 +68,12 @@ test-contract: ## [B] Tests de contrato contra DVS_BASE_URL (T119)
 	$(PY) -m pytest tests/contract
 
 up-ray: ## [B] Levanta el clúster Ray con Docker Compose (T118)
-	@echo "pendiente: T118 [B]"; exit 1
+	$(COMPOSE) up --build --detach --wait --wait-timeout 300
+	$(COMPOSE) exec -T ray-head ray status --address=127.0.0.1:6379
+	$(COMPOSE) exec -T ray-head python /workspace/deploy/ray/check_cluster.py --expected-nodes 4
 
 down-ray: ## [B] Para el clúster Ray (T118)
-	@echo "pendiente: T118 [B]"; exit 1
+	$(COMPOSE) down --remove-orphans
 
 exp: ## [B] Ejecuta un escenario: make exp SCENARIO=e2 (T121a)
 	@echo "pendiente: T121a [B]"; exit 1

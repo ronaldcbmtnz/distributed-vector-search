@@ -79,6 +79,8 @@ def create_app(
     def principal(request: Request, collection: str | None, action: Action | None) -> Principal:
         p = auth.authenticate(request.headers.get("authorization"))
         if collection is not None and action is not None:
+            if config.collection(collection) is None:
+                raise NotFound("unknown collection", collection=collection)
             auth.authorize(p, collection, action)
         if not limiter.allow(p.client):
             m().inc("rate_limited")
