@@ -76,4 +76,4 @@ down-ray: ## [B] Para el clúster Ray (T118)
 	$(COMPOSE) down --remove-orphans
 
 exp: ## [B] Ejecuta un escenario: make exp SCENARIO=e2 (T121a)
-	@echo "pendiente: T121a [B]"; exit 1
+	"$(PY)" -m experiments.runner --scenario $(or $(SCENARIO),e2) $(EXP_ARGS)

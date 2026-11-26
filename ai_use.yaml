@@ -1,0 +1,28 @@
+# No se encontró una plantilla ni una lista de campos obligatorios en .sdd/ o docs/.
+# Este esquema mínimo registra la herramienta, el alcance y las actividades verificables.
+schema_version: 1
+ai_use:
+  status: used
+  scope:
+    branch: josue_feature
+    tasks:
+      - T121a
+      - T120b
+      - T009
+      - T126
+    coverage: >-
+      Asistencia aplicada a los cambios preparados en esta contribución; no es un inventario
+      del historial completo del equipo ni de contribuciones anteriores.
+  tools:
+    - name: Codex
+      provider: OpenAI
+      model: GPT-6
+      activities:
+        - análisis de requisitos y documentación local
+        - diseño e implementación de código
+        - preparación y ejecución de pruebas automatizadas
+        - redacción y revisión de documentación técnica
+  limits:
+    team_history: >-
+      El uso de IA de otros integrantes y de contribuciones anteriores no se pudo verificar
+      en el repositorio local; este archivo no lo atribuye ni lo niega.
