@@ -32,9 +32,9 @@ services:
     healthcheck:
       test: ["CMD", "ray", "health-check", "--address=127.0.0.1:6379"]
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 30
-      start_period: 30s
+      start_period: 60s
 
   ray-worker-1:
     image: dvs-ray:2.60.1-py312
