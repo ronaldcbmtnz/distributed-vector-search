@@ -5,16 +5,16 @@ from __future__ import annotations
 import asyncio
 import os
 import uuid
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 from typing import Any
 
 import httpx
 import pytest
 
 _DIM = 128
-_BASE_URL = (
-    os.environ.get("DVS_BASE_URL", "http://127.0.0.1:8080").split(",", maxsplit=1)[0].strip()
-)
+# With DVS_BASE_URL the suite is pure black-box HTTP against that server (stub, Ray, native).
+# Without it, it runs against the in-process stub so `make test-contract` works out of the box.
+_TARGET = os.environ.get("DVS_BASE_URL", "").split(",", maxsplit=1)[0].strip()
 _RW = {"Authorization": f"Bearer {os.environ.get('DVS_API_KEY', 'dev-key-rw')}"}
 _RO = {"Authorization": f"Bearer {os.environ.get('DVS_READONLY_API_KEY', 'dev-key-ro')}"}
 _ADMIN = {"Authorization": f"Bearer {os.environ.get('DVS_ADMIN_API_KEY', 'dev-admin')}"}
@@ -22,8 +22,15 @@ _DEMO = "/v1/collections/demo"
 
 
 @pytest.fixture
-async def client() -> httpx.AsyncClient:
-    async with httpx.AsyncClient(base_url=_BASE_URL.rstrip("/"), timeout=10.0) as http:
+async def client() -> AsyncIterator[httpx.AsyncClient]:
+    if _TARGET:
+        async with httpx.AsyncClient(base_url=_TARGET.rstrip("/"), timeout=10.0) as http:
+            yield http
+        return
+    from tools.stub_server.app import create_stub_app  # no server given: in-process stub
+
+    transport = httpx.ASGITransport(app=create_stub_app())
+    async with httpx.AsyncClient(transport=transport, base_url="http://stub", timeout=10.0) as http:
         yield http
 
 
@@ -289,10 +296,15 @@ async def test_read_your_writes_tokens_and_cosine_metric(
     client: httpx.AsyncClient, vector_ids: Callable[[str], str]
 ) -> None:
     item_id = vector_ids("demo_cos")
+    cohort = uuid.uuid4().hex  # isolates this test from other vectors in a shared server
     path = f"/v1/collections/demo_cos/vectors/{item_id}"
     write = await client.put(
         path,
-        json={"vector": _vector(2), "metadata": {"fresh": True}, "request_id": _request_id()},
+        json={
+            "vector": _vector(2),
+            "metadata": {"fresh": True, "cohort": cohort},
+            "request_id": _request_id(),
+        },
         headers=_RW,
     )
     assert write.status_code == 200
@@ -305,12 +317,18 @@ async def test_read_your_writes_tokens_and_cosine_metric(
         headers=_RW,
     )
     assert fetched.status_code == 200
-    assert fetched.json()["metadata"] == {"fresh": True}
+    assert fetched.json()["metadata"] == {"fresh": True, "cohort": cohort}
     assert fetched.json()["seq"] >= token["seq"]
 
     search = await client.post(
         "/v1/collections/demo_cos/search",
-        json={"vector": _vector(1), "k": 1, "consistency": "read_your_writes", "tokens": [token]},
+        json={
+            "vector": _vector(1),
+            "k": 1,
+            "filter": {"cohort": cohort},
+            "consistency": "read_your_writes",
+            "tokens": [token],
+        },
         headers=_RW,
     )
     assert search.status_code == 200

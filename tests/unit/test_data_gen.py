@@ -209,8 +209,7 @@ def test_ground_truth_matches_independent_reference_for_each_metric(metric: str)
         for vector, vector_id in zip(vectors.astype(np.float64), ids.tolist(), strict=True):
             if metric == "L2":
                 squared = sum(
-                    (float(a) - float(b)) ** 2
-                    for a, b in zip(vector, query, strict=True)
+                    (float(a) - float(b)) ** 2 for a, b in zip(vector, query, strict=True)
                 )
                 distance = squared**0.5
             else:
@@ -301,9 +300,7 @@ def test_invalid_parameters_raise_clear_errors(tmp_path: Path) -> None:
 
     for name in (".", "..", "nested/name", "C:escape"):
         with pytest.raises(ValueError, match="name"):
-            generate_and_write(
-                DatasetParams(name, 1, 2, 2, 1, "L2", 1, 1, tmp_path)
-            )
+            generate_and_write(DatasetParams(name, 1, 2, 2, 1, "L2", 1, 1, tmp_path))
 
 
 def test_make_data_target_generates_contract_files(tmp_path: Path) -> None:

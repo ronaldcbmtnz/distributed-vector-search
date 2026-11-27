@@ -26,6 +26,27 @@ from dvs.client.retry import RetryPolicy
 _LOG = logging.getLogger("dvs.client")
 _RETRYABLE_STATUSES = {429, 503, 504}
 _CONSISTENCIES = {"eventual", "read_your_writes", "strong"}
+_MUTATING = {"upsert", "insert", "update", "delete", "batch"}
+
+
+def _history_outcome(operation: str, exc: ClientError) -> str:
+    """History outcome of a failed call: "timeout" means the outcome is UNKNOWN.
+
+    A checker must treat an unknown write as possibly applied. Besides timeouts and 504
+    (deadline_exceeded), a write that ends in 503 or in a transport failure after the request
+    was sent may also have been applied by the shard primary before the failure.
+    """
+    if isinstance(exc, TransportError) and exc.timeout:
+        return "timeout"
+    if exc.status_code == 504 or exc.error_code == "deadline_exceeded":
+        return "timeout"
+    if operation in _MUTATING and (
+        exc.status_code == 503 or (isinstance(exc, TransportError) and exc.maybe_applied)
+    ):
+        return "timeout"
+    return "error"
+
+
 _UNSET = object()
 
 
@@ -83,6 +104,9 @@ def _request_id(value: str | None) -> str:
 
 
 def _validate_vector(vector: Sequence[float]) -> list[float | int]:
+    tolist = getattr(vector, "tolist", None)
+    if callable(tolist) and not isinstance(vector, (str, bytes)):
+        vector = tolist()  # NumPy arrays are not collections.abc.Sequence
     if isinstance(vector, (str, bytes)) or not isinstance(vector, Sequence) or not vector:
         raise ValueError("vector must be a non-empty sequence of finite numbers")
     values: list[float | int] = []
@@ -665,7 +689,10 @@ class DVSClient(_SharedClient):
                     if attempt < self.retry_policy.max_retries:
                         time.sleep(self.retry_policy.delay(attempt, self._random()))
                         continue
-                    raise TransportError("could not connect to a DVS gateway") from exc
+                    raise TransportError(
+                        "could not reach a DVS gateway",
+                        maybe_applied=not isinstance(exc, httpx.ConnectError),
+                    ) from exc
 
                 if (
                     response.status_code in _RETRYABLE_STATUSES
@@ -684,13 +711,7 @@ class DVSClient(_SharedClient):
             exc.request_id = request.request_id
             error_code = exc.error_code
             status_code = exc.status_code if exc.status_code is not None else status_code
-            outcome = (
-                "timeout"
-                if (isinstance(exc, TransportError) and exc.timeout)
-                or exc.status_code == 504
-                or exc.error_code == "deadline_exceeded"
-                else "error"
-            )
+            outcome = _history_outcome(request.operation, exc)
             raise
         finally:
             self._write_history(
@@ -860,7 +881,10 @@ class AsyncDVSClient(_SharedClient):
                     if attempt < self.retry_policy.max_retries:
                         await asyncio.sleep(self.retry_policy.delay(attempt, self._random()))
                         continue
-                    raise TransportError("could not connect to a DVS gateway") from exc
+                    raise TransportError(
+                        "could not reach a DVS gateway",
+                        maybe_applied=not isinstance(exc, httpx.ConnectError),
+                    ) from exc
 
                 if (
                     response.status_code in _RETRYABLE_STATUSES
@@ -879,13 +903,7 @@ class AsyncDVSClient(_SharedClient):
             exc.request_id = request.request_id
             error_code = exc.error_code
             status_code = exc.status_code if exc.status_code is not None else status_code
-            outcome = (
-                "timeout"
-                if (isinstance(exc, TransportError) and exc.timeout)
-                or exc.status_code == 504
-                or exc.error_code == "deadline_exceeded"
-                else "error"
-            )
+            outcome = _history_outcome(request.operation, exc)
             raise
         finally:
             self._write_history(

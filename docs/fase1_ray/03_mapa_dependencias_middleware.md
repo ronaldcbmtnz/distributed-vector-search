@@ -45,6 +45,8 @@ Medido con Ray 2.60.1 en una sola máquina. Reproducible con `make test-integrat
 | ¿Funciona `ray.cancel` sobre una tarea async en curso? | Sí: el actor recibe `CancelledError` y el llamador `TaskCancelledError` | Los hedges perdedores y lo pendiente al vencer el plazo se cancelan de verdad |
 | ¿Hay backpressure por handle (`max_pending_calls`)? | Sí: `PendingCallsLimitExceeded` al **enviar** la llamada, en el lado del llamador | Se mapea a `ReplicaOverloaded` → `overloaded` (429) en escrituras, otra réplica en lecturas |
 | ¿Es idempotente crear un actor con nombre y `get_if_exists=True`? | Sí: devuelve el mismo actor con su estado | El `Catalog` puede reejecutar el arranque sin duplicar réplicas |
+| ¿Funciona el gateway como **Ray Client** (`ray://head:10001`, opción del Compose)? | Sí: bootstrap, escrituras, búsquedas, `ray.cancel` y la CLI de fallos funcionan; contrato verde. Toda llamada del gateway pasa por el proxy de Ray Client del head | Dependencia extra: el head es el punto de entrada del gateway al clúster (si cae, el gateway pierde el clúster). En F2 desaparece: el gateway habla directo con los nodos |
+| ¿Ray 2.60 autentica las conexiones? | Sí, si existe `~/.ray/auth_token`: el head exige token y el cliente `ray://` solo lo envía con `RAY_AUTH_MODE=token`. En el Compose no hay token y queda desactivado | Coherente con el modelo de amenazas (red interna confiable), y se declara |
 
 ## Observaciones del experimento
 

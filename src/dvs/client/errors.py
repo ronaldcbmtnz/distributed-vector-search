@@ -29,11 +29,19 @@ class APIError(ClientError):
 
 
 class TransportError(ClientError):
-    """A timeout or connection failure after the retry budget was exhausted."""
+    """A timeout or connection failure after the retry budget was exhausted.
 
-    def __init__(self, message: str, *, timeout: bool = False) -> None:
+    ``maybe_applied`` is False only when the request certainly never reached a gateway
+    (connection refused/unreachable). Timeouts and failures after sending leave the outcome of a
+    write UNKNOWN: it may have been applied, so it must be retried with the same request_id.
+    """
+
+    def __init__(
+        self, message: str, *, timeout: bool = False, maybe_applied: bool | None = None
+    ) -> None:
         super().__init__(message)
         self.timeout = timeout
+        self.maybe_applied = timeout if maybe_applied is None else maybe_applied
 
 
 class ProtocolError(ClientError):

@@ -20,8 +20,8 @@ from typing import Any
 import httpx
 import numpy as np
 
-from dvs.client import DVSClient  # type: ignore[import-untyped]
-from dvs.client.errors import ClientError  # type: ignore[import-untyped]
+from dvs.client import DVSClient
+from dvs.client.errors import ClientError
 from experiments.analysis import build_report, write_latencies
 from experiments.data_gen import DatasetParams, generate_and_write
 from experiments.e3_checker import check_observations
@@ -66,7 +66,8 @@ def _admin_snapshot(base_url: str, api_key: str, endpoint: str) -> dict[str, Any
     try:
         response = httpx.get(
             f"{base_url.rstrip('/')}/v1/{endpoint}",
-            headers={"X-API-Key": api_key},
+            # Contract auth is a bearer API key (docs/fase1_ray/01_contrato_api.md §2).
+            headers={"Authorization": f"Bearer {api_key}"},
             timeout=5.0,
         )
         return {"http_status": response.status_code, "body": response.json()}
@@ -305,7 +306,10 @@ def run_scenario(args: argparse.Namespace) -> Path:
                 fault_thread.join(timeout=FAULT_RECOVERY_TIMEOUT_S)
                 if fault_thread.is_alive():
                     fault_errors.append(
-                        RuntimeError("fault runner did not finish within 330 seconds")
+                        RuntimeError(
+                            "fault runner did not finish within "
+                            f"{FAULT_RECOVERY_TIMEOUT_S:g} seconds"
+                        )
                     )
         searches = [row for row in rows if row.get("recall") is not None]
         recall = float(np.mean([row["recall"] for row in searches])) if searches else None

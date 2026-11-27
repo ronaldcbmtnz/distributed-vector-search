@@ -1,5 +1,13 @@
 FROM rayproject/ray:2.60.1-py312-cpu
 
+# `tc` (iproute2) is required by the netem fault (experiments/faults.py); the Ray base image is
+# not guaranteed to ship it. Installed as root, then back to the image's default `ray` user.
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends iproute2 \
+    && rm -rf /var/lib/apt/lists/*
+USER ray
+
 WORKDIR /workspace
 
 COPY pyproject.toml README.md ./

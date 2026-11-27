@@ -11,8 +11,8 @@ from typing import Any
 
 import numpy as np
 
-from dvs.client import DVSClient  # type: ignore[import-untyped]
-from dvs.client.errors import APIError, ClientError  # type: ignore[import-untyped]
+from dvs.client import DVSClient
+from dvs.client.errors import APIError, ClientError
 
 
 def load_vectors(
@@ -245,22 +245,25 @@ def run_e3_workload(
                 t_inv = time.monotonic()
                 status = "ok"
                 if role == "writer":
+                    # The lock only hands out unique version numbers. The upsert itself runs
+                    # outside it so writers race on the same id: E3 must exercise concurrent
+                    # conflicting writes (F12), not writes serialized by the client.
                     with locks[item_index]:
                         versions[item_index] += 1
                         version = versions[item_index]
-                        vector = vectors[item_index].copy()
-                        vector[0] = float(version)
-                        item_metadata = dict(metadata[item_index])
-                        item_metadata.update({"ver": version, "experiment_run_id": run_id})
-                        try:
-                            client.upsert(
-                                collection,
-                                item_id,
-                                vector.tolist(),
-                                item_metadata,
-                            )
-                        except (ClientError, ValueError, TypeError) as exc:
-                            status = _failure_status(exc)
+                    vector = vectors[item_index].copy()
+                    vector[0] = float(version)
+                    item_metadata = dict(metadata[item_index])
+                    item_metadata.update({"ver": version, "experiment_run_id": run_id})
+                    try:
+                        client.upsert(
+                            collection,
+                            item_id,
+                            vector.tolist(),
+                            item_metadata,
+                        )
+                    except (ClientError, ValueError, TypeError) as exc:
+                        status = _failure_status(exc)
                 else:
                     try:
                         snapshot = client.get(collection, item_id, consistency="eventual")

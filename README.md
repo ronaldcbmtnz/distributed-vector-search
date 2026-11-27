@@ -62,8 +62,28 @@ Si la política de PowerShell no permite activar el entorno, ejecuta el intérpr
 .\.venv\Scripts\python.exe -m pip install -e ".[dev,ray]"
 ```
 
-En Linux, macOS o WSL, el atajo equivalente es `make install` (crea `.venv` e instala los extras
-`dev` y `ray`).
+### Linux, macOS o WSL (bash)
+
+```bash
+sudo apt install -y python3.12-venv   # Ubuntu, una vez: venv con pip
+make install                          # crea .venv e instala los extras dev y ray
+make check                            # ruff + mypy + tests unitarios
+```
+
+### Ejecución rápida sin Docker
+
+Para probar el sistema real (Ray + gateway) sin Compose, todo en un proceso local:
+
+```bash
+make run-ray-local                    # gateway en http://127.0.0.1:8080, logs en runs/local/
+```
+
+En otra terminal, los tests de contrato contra ese sistema (sin `DVS_BASE_URL` corren contra el
+stub en proceso):
+
+```bash
+DVS_BASE_URL=http://127.0.0.1:8080 make test-contract
+```
 
 ## Configuración y uso del cliente
 
@@ -134,7 +154,8 @@ python -m pytest
 
 `python -m mypy` comprueba los directorios configurados en `pyproject.toml` (`src/dvs/core` y
 `src/dvs/coordinator`). `make check` reúne Ruff, mypy y las pruebas unitarias. Las pruebas de
-contrato requieren un servidor activo y `DVS_BASE_URL`:
+contrato se ejecutan contra el stub en proceso si `DVS_BASE_URL` no está definida, o contra el
+servidor indicado:
 
 ```powershell
 $env:DVS_BASE_URL = "http://127.0.0.1:8080"
@@ -241,16 +262,15 @@ ejecutaron en el clúster real.
 
 ## Uso de IA, terceros y licencias
 
-La metodología local y los documentos SDD no definen una plantilla ni campos obligatorios para
-`ai_use.yaml`; este repositorio adopta un formato YAML mínimo que separa herramienta, modelo,
-actividades y alcance verificable. El archivo declara el uso de Codex/OpenAI GPT-6 en esta
-contribución. No representa el historial completo del equipo ni atribuye uso a otras personas.
+[`ai_use.yaml`](ai_use.yaml) sigue el formato que exige la metodología del curso (`used`,
+`tools`, `activities`, `verification`) y cubre a todo el equipo: Claude Code (Anthropic) y Codex
+(OpenAI). Cada integrante es responsable de entender, probar y poder modificar todo lo entregado.
 
-Ray es el runtime de terceros usado en Fase 1. NumPy, Pydantic, PyYAML, FastAPI, Uvicorn y HTTPX
-son dependencias directas declaradas en `pyproject.toml`. Para esos paquetes, la tabla muestra
-las versiones presentes en `.venv` durante esta validación y las licencias de sus metadatos; no
-fija las versiones permitidas por el proyecto. Ray no está instalado en el entorno anfitrión: el
-proyecto fija `2.60.1`, cuya ficha de [PyPI declara Apache 2.0](https://pypi.org/project/ray/2.60.1/).
+Ray es el runtime de terceros usado en Fase 1, fijado a `2.60.1`
+([PyPI: Apache 2.0](https://pypi.org/project/ray/2.60.1/)). NumPy, Pydantic, PyYAML, FastAPI,
+Uvicorn y HTTPX son dependencias directas declaradas en `pyproject.toml`. La tabla muestra las
+versiones observadas al redactar este README y las licencias de sus metadatos; no fija las
+versiones permitidas por el proyecto.
 
 | Paquete | Versión observada | Licencia declarada |
 |---|---:|---|
@@ -274,6 +294,18 @@ están declarados como dependencias del proyecto. Los nombres y marcas pertenece
 El proyecto es independiente y no está afiliado, patrocinado ni respaldado por esos titulares.
 No se encontró un archivo `LICENSE` en la raíz del repositorio; este aviso tampoco concede una
 licencia al código del proyecto.
+
+## Problemas conocidos del entorno
+
+- **Ruta del repositorio con espacios + Ray Client.** Si el `.venv` vive en una ruta con espacios
+  (p. ej. `Proyecto SD/`), `ray start --head` no consigue lanzar el servidor de Ray Client
+  (puerto 10001): Ray construye ese comando sin entrecomillar la ruta del intérprete. No afecta al
+  Compose (la ruta en la imagen es `/workspace`) ni a `make run-ray-local` (no usa Ray Client).
+- **Autenticación por token de Ray 2.60.** Si existe `~/.ray/auth_token` (Ray lo crea al hacer
+  `ray.init()` local), `ray start --head` activa la autenticación por token y un cliente
+  `ray://` debe arrancarse con `RAY_AUTH_MODE=token` para enviarlo. En los contenedores del
+  Compose no hay token: la autenticación queda desactivada, coherente con el modelo de amenazas
+  (red interna del clúster confiable).
 
 ## Limitaciones conocidas
 

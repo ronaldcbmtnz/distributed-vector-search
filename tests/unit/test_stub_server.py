@@ -81,9 +81,7 @@ async def test_upsert_dedup_update_get_and_delete(client: httpx.AsyncClient) -> 
     assert fetched.json()["metadata"] == {"category": "green"}
     assert fetched.json()["vector"] == _vector(1.0, 0.0)
 
-    deleted = await client.delete(
-        path, params={"request_id": "delete-item-1"}, headers=_RW
-    )
+    deleted = await client.delete(path, params={"request_id": "delete-item-1"}, headers=_RW)
     assert deleted.status_code == 200 and deleted.json()["existed"] is True
     missing = await client.get(path, headers=_RW)
     assert missing.status_code == 404
@@ -129,9 +127,7 @@ async def test_cosine_collection_and_admin_endpoints(client: httpx.AsyncClient) 
         headers=_RW,
     )
     assert write.status_code == 200
-    search = await client.post(
-        f"{cosine_path}/search", json={"vector": _vector(1.0)}, headers=_RW
-    )
+    search = await client.post(f"{cosine_path}/search", json={"vector": _vector(1.0)}, headers=_RW)
     assert search.status_code == 200
     assert search.json()["results"][0]["distance"] == pytest.approx(0.0)
 

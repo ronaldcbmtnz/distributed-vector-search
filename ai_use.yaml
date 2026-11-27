@@ -1,28 +1,25 @@
-# No se encontró una plantilla ni una lista de campos obligatorios en .sdd/ o docs/.
-# Este esquema mínimo registra la herramienta, el alcance y las actividades verificables.
-schema_version: 1
+# Declaración de uso de IA, en el formato que pide la metodología del curso
+# (ai_use: used / tools / activities / verification). Cubre a TODO el equipo.
+# Principio del curso: se puede delegar trabajo a la IA, no la responsabilidad por su corrección.
+# Cada integrante debe poder explicar y modificar cualquier parte entregada, incluida la asistida.
 ai_use:
-  status: used
-  scope:
-    branch: josue_feature
-    tasks:
-      - T121a
-      - T120b
-      - T009
-      - T126
-    coverage: >-
-      Asistencia aplicada a los cambios preparados en esta contribución; no es un inventario
-      del historial completo del equipo ni de contribuciones anteriores.
+  used: true
   tools:
-    - name: Codex
-      provider: OpenAI
-      model: GPT-6
-      activities:
-        - análisis de requisitos y documentación local
-        - diseño e implementación de código
-        - preparación y ejecución de pruebas automatizadas
-        - redacción y revisión de documentación técnica
-  limits:
-    team_history: >-
-      El uso de IA de otros integrantes y de contribuciones anteriores no se pudo verificar
-      en el repositorio local; este archivo no lo atribuye ni lo niega.
+    - Claude Code (Anthropic, Claude Opus 5.5)   # integrante A: sistema (core, coordinador, Ray, API)
+    - Codex (OpenAI, GPT-6)                      # integrante B: cliente, stub, datos, despliegue, experimentos
+  activities:
+    - requirements analysis and planning (spec-driven development)
+    - architecture discussion
+    - implementation
+    - debugging
+    - test generation
+    - cross code review
+    - technical documentation
+  verification:
+    - public tests (make test, make test-contract)
+    - integration tests on a local Ray cluster (make test-integration)
+    - property-based tests (hypothesis)
+    - contract tests against the stub and against the Ray gateway
+    - fault/workload campaign (experiments/)
+    - static checks (ruff, mypy --strict on core and coordinator)
+    - manual review
