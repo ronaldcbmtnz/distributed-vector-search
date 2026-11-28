@@ -1,0 +1,31 @@
+# Alternative image for slow or offline networks: reuses the Python packages already installed in
+# the local `.venv` (`make install`, Ray 2.60.1) instead of pulling the ~1 GB rayproject/ray base.
+# Only `python:3.12-slim` (~45 MB) and two small Debian packages are downloaded.
+#   DVS_DOCKERFILE=deploy/ray/Dockerfile.offline make up-ray
+# Same tag, Ray and Python versions as the official Dockerfile; the official one stays the
+# reference for reproducibility on a clean machine.
+FROM python:3.12-slim
+
+# iproute2: `tc` for the netem fault; procps: `kill` for the kill-pid fault.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends iproute2 procps \
+    && rm -rf /var/lib/apt/lists/*
+
+# Same uid as the rayproject image, so files written to the mounted runs/ stay owned by the user.
+RUN useradd --create-home --uid 1000 --shell /bin/bash ray
+
+COPY .venv/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+# The venv's console scripts point to the host interpreter: recreate the one Compose uses.
+RUN rm -f /usr/local/lib/python3.12/site-packages/_editable_impl_dvs.pth \
+    && printf '#!/bin/sh\nexec python -c "import sys; from ray.scripts.scripts import main; sys.argv[0] = \\"ray\\"; sys.exit(main())" "$@"\n' > /usr/local/bin/ray \
+    && chmod +x /usr/local/bin/ray
+
+WORKDIR /workspace
+COPY pyproject.toml README.md ./
+COPY src ./src
+COPY deploy/ray/check_cluster.py ./deploy/ray/check_cluster.py
+ENV PYTHONPATH=/workspace/src
+
+RUN python -c "import ray, dvs.api.app, dvs.ray_impl.bootstrap; assert ray.__version__ == '2.60.1', ray.__version__"
+
+USER ray

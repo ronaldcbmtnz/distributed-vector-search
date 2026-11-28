@@ -41,7 +41,7 @@
 - [x] T004b [A] — Cerrar las decisiones menores de F1: C4 = métricas L2 + coseno; C5 = dedup sin expiración
 - [ ] T004c [A] — Cerrar C1 (ventana de failover acotada): solo afecta a F2 (ver T007)
 - [x] T005 [A] — Aprobar constitución, spec del contrato y plan técnico de F1
-- [ ] T005b [A+B] (B ✅; falta en la máquina de A) — Instalar Docker Engine + Compose en la máquina de cada uno · hecho cuando: `docker compose version` responde sin `sudo` [P]
+- [x] T005b [A+B] — Instalar Docker Engine + Compose en la máquina de cada uno · hecho cuando: `docker compose version` responde sin `sudo` [P]
 - [ ] T006 [A+B] — Confirmar equipo: nombres completos, grupos y reparto de áreas · hecho cuando: tabla en `docs/README.md` y nombre en `REPARTO_TAREAS.md`
 - [ ] T007 [A] — Preguntar al profesor (si hace falta): ¿una ventana acotada sin escrituras durante el failover cuenta como "mantener la funcionalidad"? [P]
 - [x] T008 [A] — Andamiaje del repo. **Va primero: B parte de aquí** (dep: T005)
@@ -109,16 +109,16 @@
   - Parciales (`@pytest.mark.faults`).
   - Duplicados.
   - Concurrencia.
-- [ ] T118 [B] — ⚠️ código listo, falta verificar `make up-ray` con la imagen nueva (iproute2) · Docker Compose del clúster Ray (REPARTO §3.3): head + 3 workers + gateway, `make up-ray` · cubre: REQ-11.1 · hecho cuando: `ray status` muestra 4 nodos; con la app real en J2 los logs muestran réplicas en nodos distintos (dep: T005b)
+- [x] T118 [B] — Docker Compose del clúster Ray (REPARTO §3.3): head + 3 workers + gateway, `make up-ray` · cubre: REQ-11.1 · hecho cuando: `ray status` muestra 4 nodos; con la app real en J2 los logs muestran réplicas en nodos distintos (dep: T005b)
 
 ### F1-C · Experimento y documentos de la entrega
 
 - [x] T120a [A] — Ganchos de fallos dentro de Ray: CLI `python -m dvs.ray_impl.faults` con `info`/`delay`/`clear`/`kill` (REPARTO §3.4) (dep: T110)
-- [ ] T120b [B] — ⚠️ código listo y probado con mocks; falta probar contra el Compose real · Fallos a nivel de Docker/SO + runner de escenarios (carga + fallo + recolección, con registro en `faults.jsonl`) [P]
-  - Fallos: `docker kill`, `kill -9` de un PID, `docker pause`, `tc netem` y desconexión de red.
+- [x] T120b [B] — Fallos a nivel de Docker/SO + runner de escenarios (carga + fallo + recolección, con registro en `faults.jsonl`) [P]
+  - Fallos: `docker kill`, `kill -9` de un PID, `docker pause`, `tc netem`, desconexión de red, `ray-delay` y `ray-kill-shard`; todos verificados contra el Compose.
 - [x] T121a [B] — Harness de experimentos: generador de carga, estructura `runs/<id>/` (REPARTO §3.9) y análisis · hecho cuando: `make exp SCENARIO=e2` genera `report.md` (contra el stub primero) (dep: T010, T116)
   - Análisis: p50/p95/p99, % parciales, recall@k frente a ground truth y checker de mezclas para E3.
-- [ ] T121b [A+B] — Ejecutar el experimento inicial y registrarlo con la plantilla de 10 campos · hecho cuando: `docs/fase1_ray/04_experimento_inicial.md` relleno con evidencia (logs/CSV) (dep: J3 = T118 + T120a + T120b + T121a)
+- [ ] T121b [A+B] — (ejecutado: evidencia en `experiments/results/f1/`; falta redactar `04_experimento_inicial.md`) Ejecutar el experimento inicial y registrarlo con la plantilla de 10 campos · hecho cuando: `docs/fase1_ray/04_experimento_inicial.md` relleno con evidencia (logs/CSV) (dep: J3 = T118 + T120a + T120b + T121a)
   - E1: crash de actor.
   - E2: shard lento → parciales.
   - E3: escrituras y búsquedas concurrentes.
@@ -127,7 +127,7 @@
 - [ ] T124 [A] — Mapa de dependencias del middleware, con lo **observado** en T121b · hecho cuando: `docs/fase1_ray/03_mapa_dependencias_middleware.md` (dep: T121b)
 - [ ] T125 [A] — Responder la puerta de salida (5 preguntas) y congelar el contrato · hecho cuando: `docs/fase1_ray/README.md` §Puerta (dep: T121b–T124)
 - [x] T126 [B] — README raíz: qué es, cómo levantarlo, cómo correr tests y experimentos, aviso de terceros, `ai_use` (dep: T118)
-- [ ] T127 [A+B] — Revisión final: `make test` limpio, ensayo de demo, tag `v1-ray` (dep: todo F1)
+- [ ] T127 [A+B] — (verificado: `make check`, integración y contrato verdes, demo = batería de T121b; falta el tag `v1-ray` tras el commit) Revisión final: `make test` limpio, ensayo de demo, tag `v1-ray` (dep: todo F1)
 - [ ] T128 [A+B] — **ENTREGA 1:** issue en GitHub (tema, nombre completo + grupo de cada integrante, enlace)
 
 ## Fase 2 — Sistema nativo sin Ray + informe

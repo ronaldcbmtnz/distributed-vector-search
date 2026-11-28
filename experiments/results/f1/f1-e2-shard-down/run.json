@@ -1,0 +1,72 @@
+{
+  "run_id": "f1-e2-shard-down",
+  "scenario": "e2",
+  "target_kind": "ray",
+  "base_url": "http://127.0.0.1:8080",
+  "collection": "demo",
+  "seed": 20261125,
+  "vectors": 5000,
+  "dim": 128,
+  "n_clusters": 32,
+  "queries": 2000,
+  "k": 10,
+  "clients": 8,
+  "batch_size": 500,
+  "git_commit": "3fa150a3d467f2fc3d2e202b967ae34d0d005dff-dirty",
+  "started_at": "2026-11-27T23:46:13.401Z",
+  "started_mono": 5527.560897262,
+  "status": "completed",
+  "fault_status": "recovered",
+  "fault": {
+    "kind": "ray-kill-shard",
+    "target": "s0",
+    "delay_ms": null
+  },
+  "server_run_id": "f1-e2-shard-down",
+  "fault_windows": {
+    "fault_applied_mono": 5540.335841729,
+    "fault_recovered_mono": 5542.272376838,
+    "before": {
+      "ops": 1235,
+      "errors": 0,
+      "partial": 86,
+      "searches": 1235,
+      "writes": 0,
+      "p50_ms": 48.915902,
+      "p99_ms": 125.14518290000002
+    },
+    "during": {
+      "ops": 309,
+      "errors": 0,
+      "partial": 309,
+      "searches": 309,
+      "writes": 0,
+      "p50_ms": 49.047587,
+      "p99_ms": 78.97713852000001
+    },
+    "after": {
+      "ops": 456,
+      "errors": 0,
+      "partial": 456,
+      "searches": 456,
+      "writes": 0,
+      "p50_ms": 47.8862325,
+      "p99_ms": 79.3885459
+    },
+    "fault_applied_s": 8.557,
+    "fault_recovered_s": 10.494
+  },
+  "loaded_vectors": 5000,
+  "completed_operations": 2000,
+  "completed_searches": 2000,
+  "completed_writes": 0,
+  "recall_at_k": 0.89295,
+  "finished_at": "2026-11-27T23:46:31.028Z",
+  "finished_mono": 5545.1961556,
+  "duration_seconds": 17.635258337999403,
+  "server_logs": {
+    "source": "/home/ronald/Proyecto SD/distributed-vector-search/runs/f1-e2-shard-down/logs",
+    "copied": 0,
+    "collected_at": "2026-11-27T23:46:31.028Z"
+  }
+}

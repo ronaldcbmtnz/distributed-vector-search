@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import itertools
+import logging
 import time
 from collections.abc import Callable
 
@@ -15,6 +16,8 @@ from dvs.coordinator.transport import ShardTransport
 from dvs.core.model import Consistency, ShardInfo, ShardMap
 
 Clock = Callable[[], float]
+
+log = logging.getLogger("dvs.coordinator")
 
 
 class SuspicionTracker:
@@ -59,7 +62,13 @@ class ReplicaRouter:
 
 
 class ShardMapCache:
-    """Shard map with a TTL. Refreshed on expiry or explicit invalidation (e.g. NotPrimary)."""
+    """Shard map with a TTL. Refreshed on expiry or explicit invalidation (e.g. NotPrimary).
+
+    If a refresh fails (the map's owner is unreachable) the last known map keeps being served
+    and the refresh is retried after another TTL: losing the map's owner must not take down a
+    gateway that already knows the shards (T121b: the Catalog died with its node and every
+    request, health included, returned 500). Only the very first fetch propagates the error.
+    """
 
     def __init__(self, transport: ShardTransport, ttl_s: float, clock: Clock = time.monotonic):
         self._transport = transport
@@ -67,16 +76,37 @@ class ShardMapCache:
         self._clock = clock
         self._map: ShardMap | None = None
         self._fetched_at = 0.0
+        self._fresh = False
         self._lock = asyncio.Lock()
 
     def invalidate(self) -> None:
-        self._map = None
+        self._fresh = False
+
+    def _valid(self) -> bool:
+        return (
+            self._map is not None and self._fresh and self._clock() - self._fetched_at < self._ttl_s
+        )
 
     async def get(self) -> ShardMap:
-        if self._map is not None and self._clock() - self._fetched_at < self._ttl_s:
+        if self._valid():
+            assert self._map is not None
             return self._map
         async with self._lock:  # one refresh at a time (no stampede)
-            if self._map is None or self._clock() - self._fetched_at >= self._ttl_s:
-                self._map = await self._transport.shard_map()
+            if not self._valid():
+                try:
+                    self._map = await self._transport.shard_map()
+                except Exception as e:
+                    if self._map is None:
+                        raise
+                    log.warning(
+                        "shard map refresh failed; serving the last known map",
+                        extra={
+                            "event": "map.refresh_failed",
+                            "error": type(e).__name__,
+                            "map_version": self._map.version,
+                        },
+                    )
                 self._fetched_at = self._clock()
+                self._fresh = True
+            assert self._map is not None
             return self._map

@@ -1,0 +1,72 @@
+{
+  "run_id": "f1-e2-netem",
+  "scenario": "e2",
+  "target_kind": "ray",
+  "base_url": "http://127.0.0.1:8080",
+  "collection": "demo",
+  "seed": 20261125,
+  "vectors": 5000,
+  "dim": 128,
+  "n_clusters": 32,
+  "queries": 2000,
+  "k": 10,
+  "clients": 8,
+  "batch_size": 500,
+  "git_commit": "3fa150a3d467f2fc3d2e202b967ae34d0d005dff-dirty",
+  "started_at": "2026-11-27T23:45:12.875Z",
+  "started_mono": 5467.032532525,
+  "status": "completed",
+  "fault_status": "recovered",
+  "fault": {
+    "kind": "netem",
+    "target": "ray-worker-2",
+    "delay_ms": 200.0
+  },
+  "server_run_id": "f1-e2-netem",
+  "fault_windows": {
+    "fault_applied_mono": 5473.500949669,
+    "fault_recovered_mono": 5482.534855829,
+    "before": {
+      "ops": 343,
+      "errors": 0,
+      "partial": 0,
+      "searches": 343,
+      "writes": 0,
+      "p50_ms": 45.490708,
+      "p99_ms": 108.36205425999938
+    },
+    "during": {
+      "ops": 1326,
+      "errors": 0,
+      "partial": 0,
+      "searches": 1326,
+      "writes": 0,
+      "p50_ms": 46.7724245,
+      "p99_ms": 169.085558
+    },
+    "after": {
+      "ops": 331,
+      "errors": 0,
+      "partial": 0,
+      "searches": 331,
+      "writes": 0,
+      "p50_ms": 44.431612,
+      "p99_ms": 86.33405159999998
+    },
+    "fault_applied_s": 2.166,
+    "fault_recovered_s": 11.199
+  },
+  "loaded_vectors": 5000,
+  "completed_operations": 2000,
+  "completed_searches": 2000,
+  "completed_writes": 0,
+  "recall_at_k": 1.0,
+  "finished_at": "2026-11-27T23:45:30.587Z",
+  "finished_mono": 5484.755224899,
+  "duration_seconds": 17.722692373999962,
+  "server_logs": {
+    "source": "/home/ronald/Proyecto SD/distributed-vector-search/runs/f1-e2-netem/logs",
+    "copied": 0,
+    "collected_at": "2026-11-27T23:45:30.588Z"
+  }
+}

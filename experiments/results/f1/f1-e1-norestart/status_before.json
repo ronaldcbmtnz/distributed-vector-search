@@ -1,0 +1,140 @@
+{
+  "http_status": 200,
+  "body": {
+    "map_version": 1,
+    "replicas": [
+      {
+        "replica_id": "s0/r0",
+        "shard": 0,
+        "role": "primary",
+        "ready": true,
+        "node_id": "d21edabe971256f9f3f25269fbb2e461ba81433ff8ac50b69b83de0a",
+        "pid": 247,
+        "incarnation": "517f234c14fe",
+        "applied_seq": 0,
+        "commit_seq": 0
+      },
+      {
+        "replica_id": "s0/r1",
+        "shard": 0,
+        "role": "backup",
+        "ready": true,
+        "node_id": "2352e29cec55955a3d0825fbb7c60cbabd7d472e62b82723a44ca044",
+        "pid": 247,
+        "incarnation": "49126986b478",
+        "applied_seq": 0,
+        "commit_seq": 0
+      },
+      {
+        "replica_id": "s0/r2",
+        "shard": 0,
+        "role": "backup",
+        "ready": true,
+        "node_id": "6dbd10f12b550cc75e4ec1a6bb5aae02fc7867865e54af2ac9cd5a9c",
+        "pid": 249,
+        "incarnation": "61be94842faa",
+        "applied_seq": 0,
+        "commit_seq": 0
+      },
+      {
+        "replica_id": "s1/r0",
+        "shard": 1,
+        "role": "primary",
+        "ready": true,
+        "node_id": "2352e29cec55955a3d0825fbb7c60cbabd7d472e62b82723a44ca044",
+        "pid": 253,
+        "incarnation": "cc748f9aa05e",
+        "applied_seq": 0,
+        "commit_seq": 0
+      },
+      {
+        "replica_id": "s1/r1",
+        "shard": 1,
+        "role": "backup",
+        "ready": true,
+        "node_id": "6dbd10f12b550cc75e4ec1a6bb5aae02fc7867865e54af2ac9cd5a9c",
+        "pid": 252,
+        "incarnation": "30a114b4925a",
+        "applied_seq": 0,
+        "commit_seq": 0
+      },
+      {
+        "replica_id": "s1/r2",
+        "shard": 1,
+        "role": "backup",
+        "ready": true,
+        "node_id": "d21edabe971256f9f3f25269fbb2e461ba81433ff8ac50b69b83de0a",
+        "pid": 251,
+        "incarnation": "50552fbe23c9",
+        "applied_seq": 0,
+        "commit_seq": 0
+      },
+      {
+        "replica_id": "s2/r1",
+        "shard": 2,
+        "role": "primary",
+        "ready": true,
+        "node_id": "6dbd10f12b550cc75e4ec1a6bb5aae02fc7867865e54af2ac9cd5a9c",
+        "pid": 247,
+        "incarnation": "bfdc9c2db9a9",
+        "applied_seq": 0,
+        "commit_seq": 0
+      },
+      {
+        "replica_id": "s2/r0",
+        "shard": 2,
+        "role": "backup",
+        "ready": true,
+        "node_id": "2352e29cec55955a3d0825fbb7c60cbabd7d472e62b82723a44ca044",
+        "pid": 251,
+        "incarnation": "71f2d7efb309",
+        "applied_seq": 0,
+        "commit_seq": 0
+      },
+      {
+        "replica_id": "s2/r2",
+        "shard": 2,
+        "role": "backup",
+        "ready": true,
+        "node_id": "d21edabe971256f9f3f25269fbb2e461ba81433ff8ac50b69b83de0a",
+        "pid": 253,
+        "incarnation": "bf1b4c6df8e7",
+        "applied_seq": 0,
+        "commit_seq": 0
+      },
+      {
+        "replica_id": "s3/r0",
+        "shard": 3,
+        "role": "primary",
+        "ready": true,
+        "node_id": "6dbd10f12b550cc75e4ec1a6bb5aae02fc7867865e54af2ac9cd5a9c",
+        "pid": 250,
+        "incarnation": "3176b0d42a06",
+        "applied_seq": 0,
+        "commit_seq": 0
+      },
+      {
+        "replica_id": "s3/r1",
+        "shard": 3,
+        "role": "backup",
+        "ready": true,
+        "node_id": "2352e29cec55955a3d0825fbb7c60cbabd7d472e62b82723a44ca044",
+        "pid": 249,
+        "incarnation": "32f44ebbfc6d",
+        "applied_seq": 0,
+        "commit_seq": 0
+      },
+      {
+        "replica_id": "s3/r2",
+        "shard": 3,
+        "role": "backup",
+        "ready": true,
+        "node_id": "d21edabe971256f9f3f25269fbb2e461ba81433ff8ac50b69b83de0a",
+        "pid": 250,
+        "incarnation": "97202483397f",
+        "applied_seq": 0,
+        "commit_seq": 0
+      }
+    ]
+  }
+}

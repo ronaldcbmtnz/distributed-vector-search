@@ -3,7 +3,7 @@
     python -m dvs.ray_impl.faults info
     python -m dvs.ray_impl.faults delay --replica s1/r2 --ms 200 --mode block [--ops search write]
     python -m dvs.ray_impl.faults clear --replica s1/r2
-    python -m dvs.ray_impl.faults kill  --replica s1/r2 [--no-restart]
+    python -m dvs.ray_impl.faults kill  --replica s1/r2 [s1/r0 ...] [--no-restart]
 
 Run it from any container attached to the Ray cluster (e.g. the gateway). Output is JSON on
 stdout. `delay`/`clear` require `fault_injection.enabled: true` in the configuration; `kill`
@@ -47,6 +47,10 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 info = {"replica_id": rid, "error": type(e).__name__}
             out.append(info)
         return {**ts, "replicas": out}
+    if args.cmd == "kill":  # several replicas in one connection (a whole shard at once)
+        for rid in args.replica:
+            ray.kill(_replica(args.cluster, rid), no_restart=args.no_restart)
+        return {**ts, "replicas": args.replica, "no_restart": args.no_restart}
     handle = _replica(args.cluster, args.replica)
     if args.cmd == "delay":
         ray.get(handle.debug_set_delay.remote(args.ms, args.mode, args.ops or []), timeout=5)
@@ -54,9 +58,6 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     if args.cmd == "clear":
         ray.get(handle.debug_clear.remote(), timeout=5)
         return {**ts, "replica": args.replica}
-    if args.cmd == "kill":
-        ray.kill(handle, no_restart=args.no_restart)
-        return {**ts, "replica": args.replica, "no_restart": args.no_restart}
     raise SystemExit(f"unknown command {args.cmd}")
 
 
@@ -74,8 +75,8 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
     d.add_argument("--ops", nargs="*", choices=["search", "write", "replicate"])
     c = sub.add_parser("clear", help="remove injected latency")
     c.add_argument("--replica", required=True)
-    k = sub.add_parser("kill", help="ray.kill a replica actor")
-    k.add_argument("--replica", required=True)
+    k = sub.add_parser("kill", help="ray.kill one or more replica actors")
+    k.add_argument("--replica", required=True, nargs="+")
     k.add_argument("--no-restart", action="store_true")
     return p.parse_args(argv)
 

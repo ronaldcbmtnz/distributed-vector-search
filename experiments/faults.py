@@ -17,6 +17,15 @@ PROJECT = "dvs-f1"
 SERVICES = {"ray-head", "ray-worker-1", "ray-worker-2", "ray-worker-3", "gateway"}
 WORKERS = {"ray-worker-1", "ray-worker-2", "ray-worker-3"}
 NETEM_HANDLE = "7e57:"
+FAULT_KINDS = (
+    "docker-kill",
+    "kill-pid",
+    "docker-pause",
+    "netem",
+    "disconnect",
+    "ray-delay",
+    "ray-kill-shard",
+)
 
 
 class FaultError(RuntimeError):
@@ -257,6 +266,22 @@ class FaultController:
                     "search",
                 )
                 token["delay_ms"] = delay_ms
+            elif kind == "ray-kill-shard":
+                # Every replica of one shard, without restart: the shard becomes unserved and
+                # searches must come back as marked partials. F1 never recreates replicas, so
+                # this fault is not recoverable until the cluster is restarted.
+                shard = target[1:] if target.startswith("s") else target
+                if not shard.isdigit():
+                    raise FaultError("ray-kill-shard target must be a shard id such as s0")
+                victims = sorted(
+                    str(item["replica_id"])
+                    for item in self._replicas()
+                    if str(item.get("replica_id", "")).startswith(f"s{int(shard)}/")
+                )
+                if not victims:
+                    raise FaultError(f"no replicas found for shard {target}")
+                self._gateway_command("kill", "--replica", *victims, "--no-restart")
+                token["replicas"] = victims
             elif kind == "netem":
                 if target not in WORKERS:
                     raise FaultError(
@@ -342,6 +367,8 @@ class FaultController:
                 self._service(self._worker_service(str(container_id)))
             elif kind == "ray-delay":
                 self._gateway_command("clear", "--replica", str(target))
+            elif kind == "ray-kill-shard":
+                pass  # not recoverable in F1 (see apply); only the cluster health is checked
             elif kind == "netem":
                 info = self._inspect(str(container_id))
                 if info.get("State", {}).get("Status") != "running":
@@ -469,9 +496,13 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument(
         "--kind",
         required=True,
-        choices=("docker-kill", "kill-pid", "docker-pause", "netem", "disconnect", "ray-delay"),
+        choices=FAULT_KINDS,
     )
-    run.add_argument("--target", required=True, help="Compose service, or replica id for kill-pid")
+    run.add_argument(
+        "--target",
+        required=True,
+        help="Compose service, replica id (kill-pid, ray-delay) or shard id (ray-kill-shard)",
+    )
     run.add_argument("--duration-seconds", type=float, default=5.0)
     run.add_argument("--delay-ms", type=float)
     return parser

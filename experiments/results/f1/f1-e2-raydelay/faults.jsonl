@@ -1,0 +1,3 @@
+{"event": "fault_requested", "ts": "2026-11-27T23:44:09.726Z", "mono": 5403.893564524, "kind": "ray-delay", "target": "s1/r0", "delay_ms": 500.0}
+{"event": "fault_applied", "ts": "2026-11-27T23:44:16.517Z", "mono": 5410.685134775, "kind": "ray-delay", "target": "s1/r0", "delay_ms": 500.0}
+{"event": "fault_recovered", "ts": "2026-11-27T23:44:24.963Z", "mono": 5419.131158364, "kind": "ray-delay", "target": "s1/r0", "delay_ms": 500.0}

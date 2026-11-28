@@ -5,7 +5,8 @@ services:
     image: dvs-ray:2.60.1-py312
     build:
       context: ../..
-      dockerfile: deploy/ray/Dockerfile
+      # Slow network: DVS_DOCKERFILE=deploy/ray/Dockerfile.offline (reuses the local .venv).
+      dockerfile: ${DVS_DOCKERFILE:-deploy/ray/Dockerfile}
     command:
       - ray
       - start
@@ -23,6 +24,12 @@ services:
     environment: &ray_environment
       DVS_CONFIG: /workspace/deploy/ray/config.ray.yaml
       DVS_RUN_DIR: /runs/${DVS_RUN_ID:-compose}
+      # E1: run once with 0 (default in config) and once with restarts (e.g. 3).
+      DVS_ACTORS_MAX_RESTARTS: ${DVS_ACTORS_MAX_RESTARTS:-}
+      # The head's Ray Client proxy forks one server per client while gRPC threads are running;
+      # with the default epoll1 poller ~1 in 4 forked servers aborts ("next_worker->state ==
+      # KICKED") and that client hangs 30 s. The poll strategy avoids that code path.
+      GRPC_POLL_STRATEGY: poll
       PYTHONUNBUFFERED: "1"
     volumes: &ray_volumes
       - ../../runs:/runs

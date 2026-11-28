@@ -1,0 +1,72 @@
+{
+  "run_id": "f1-e1-two-workers",
+  "scenario": "e1",
+  "target_kind": "ray",
+  "base_url": "http://127.0.0.1:8080",
+  "collection": "demo",
+  "seed": 20261125,
+  "vectors": 5000,
+  "dim": 128,
+  "n_clusters": 32,
+  "queries": 3000,
+  "k": 10,
+  "clients": 8,
+  "batch_size": 500,
+  "git_commit": "3fa150a3d467f2fc3d2e202b967ae34d0d005dff-dirty",
+  "started_at": "2026-11-27T23:50:19.171Z",
+  "started_mono": 5773.333916268,
+  "status": "completed",
+  "fault_status": "recovered",
+  "fault": {
+    "kind": "docker-kill",
+    "target": "ray-worker-1",
+    "delay_ms": null
+  },
+  "server_run_id": "f1-e1-two-workers",
+  "fault_windows": {
+    "fault_applied_mono": 5780.650326601,
+    "fault_recovered_mono": 5815.741233022,
+    "before": {
+      "ops": 538,
+      "errors": 4,
+      "partial": 0,
+      "searches": 238,
+      "writes": 300,
+      "p50_ms": 28.597376,
+      "p99_ms": 145.27686939999995
+    },
+    "during": {
+      "ops": 2883,
+      "errors": 121,
+      "partial": 0,
+      "searches": 2762,
+      "writes": 121,
+      "p50_ms": 22.897119,
+      "p99_ms": 2008.50185736
+    },
+    "after": {
+      "ops": 2579,
+      "errors": 2579,
+      "partial": 0,
+      "searches": 0,
+      "writes": 2579,
+      "p50_ms": 3.716847,
+      "p99_ms": 2019.5256974200001
+    },
+    "fault_applied_s": 2.216,
+    "fault_recovered_s": 37.307
+  },
+  "loaded_vectors": 5000,
+  "completed_operations": 6000,
+  "completed_searches": 3000,
+  "completed_writes": 3000,
+  "recall_at_k": 1.0,
+  "finished_at": "2026-11-27T23:56:33.409Z",
+  "finished_mono": 6147.576337863,
+  "duration_seconds": 374.24242159499954,
+  "server_logs": {
+    "source": "/home/ronald/Proyecto SD/distributed-vector-search/runs/f1-e1-two-workers/logs",
+    "copied": 0,
+    "collected_at": "2026-11-27T23:56:33.409Z"
+  }
+}

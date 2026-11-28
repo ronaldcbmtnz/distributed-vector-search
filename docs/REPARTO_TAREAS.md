@@ -127,7 +127,7 @@ Se ejecutan desde el contenedor gateway, que tiene acceso al clúster Ray:
 python -m dvs.ray_impl.faults info                                         # JSON: réplicas con shard, rol, node_id, pid, contenedor
 python -m dvs.ray_impl.faults delay --replica s1/r2 --ms 200 --mode block  # block = CPU lenta; async = espera sin bloquear
 python -m dvs.ray_impl.faults clear --replica s1/r2
-python -m dvs.ray_impl.faults kill  --replica s1/r2 [--no-restart]
+python -m dvs.ray_impl.faults kill  --replica s1/r2 [s1/r0 ...] [--no-restart]
 ```
 
 B usa `info` para saber qué PID matar con `docker exec <worker> kill -9 <pid>`.

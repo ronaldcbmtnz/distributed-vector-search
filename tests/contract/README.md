@@ -27,11 +27,19 @@ Claves: `DVS_API_KEY` (por defecto `dev-key-rw`), `DVS_READONLY_API_KEY` (`dev-k
 
 ## Pruebas con fallos
 
-Las pruebas marcadas `faults` se omiten por defecto. Para ejecutarlas, prepara en el clúster un
-shard sin ninguna réplica viva (por ejemplo, `python -m dvs.ray_impl.faults kill --replica sN/rI
---no-restart` para sus tres réplicas) y define `DVS_FAULTS_EXPECT_PARTIAL=1`. Comprueban el
-parcial explícito (`partial`, `coverage`, `missing_shards`) y el `503 unavailable` con
-`allow_partial=false`.
+Las pruebas marcadas `faults` se omiten por defecto. Para ejecutarlas hace falta un shard sin
+ninguna réplica viva y `DVS_FAULTS_EXPECT_PARTIAL=1`. Comprueban el parcial explícito
+(`partial`, `coverage`, `missing_shards`) y el `503 unavailable` con `allow_partial=false`.
+Con el Compose (`make up-ray`):
+
+```bash
+.venv/bin/python -m experiments.faults --run-dir runs/contract-faults run --kind ray-kill-shard --target s0 --duration-seconds 1
+DVS_BASE_URL=http://127.0.0.1:8080 DVS_FAULTS_EXPECT_PARTIAL=1 .venv/bin/python -m pytest tests/contract -m faults
+make down-ray   # F1 no recrea réplicas: el shard sigue caído hasta reiniciar el clúster
+```
+
+Con un shard caído, ejecuta **solo** `-m faults`: el resto de la suite escribe en todos los
+shards y sus escrituras en el shard caído fallan con `unavailable`, como debe ser.
 
 Las pruebas en proceso del stub y del generador de datos están en `tests/unit/`
 (`test_stub_server.py`, `test_data_gen.py`) y se ejecutan con `make check`.

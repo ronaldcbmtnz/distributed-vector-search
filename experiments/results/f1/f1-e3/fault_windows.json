@@ -1,0 +1,31 @@
+{
+  "fault_applied_mono": null,
+  "fault_recovered_mono": null,
+  "before": {
+    "ops": 4000,
+    "errors": 0,
+    "partial": 0,
+    "searches": 0,
+    "writes": 2000,
+    "p50_ms": 13.212624,
+    "p99_ms": 22.870497789999924
+  },
+  "during": {
+    "ops": 0,
+    "errors": 0,
+    "partial": 0,
+    "searches": 0,
+    "writes": 0,
+    "p50_ms": null,
+    "p99_ms": null
+  },
+  "after": {
+    "ops": 0,
+    "errors": 0,
+    "partial": 0,
+    "searches": 0,
+    "writes": 0,
+    "p50_ms": null,
+    "p99_ms": null
+  }
+}

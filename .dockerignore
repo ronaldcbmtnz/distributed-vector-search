@@ -1,0 +1,12 @@
+# Build context of deploy/ray/Dockerfile: only pyproject, README, src and deploy files are used.
+.git
+.venv
+venv
+runs
+data
+orientacion_proyecto
+.sdd
+**/__pycache__
+.pytest_cache
+.ruff_cache
+.mypy_cache

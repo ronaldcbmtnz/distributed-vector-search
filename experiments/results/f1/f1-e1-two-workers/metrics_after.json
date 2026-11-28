@@ -1,0 +1,58 @@
+{
+  "http_status": 200,
+  "body": {
+    "ops": {
+      "search": {
+        "count": 3000,
+        "p50_ms": 18.846,
+        "p95_ms": 130.266,
+        "p99_ms": 140.738
+      },
+      "write": {
+        "count": 3000,
+        "p50_ms": 2.143,
+        "p95_ms": 2013.153,
+        "p99_ms": 2016.508
+      }
+    },
+    "shards": {
+      "0": {
+        "count": 3000,
+        "p50_ms": 13.0,
+        "p95_ms": 23.05,
+        "p99_ms": 130.0
+      },
+      "1": {
+        "count": 3000,
+        "p50_ms": 14.0,
+        "p95_ms": 26.0,
+        "p99_ms": 129.01
+      },
+      "2": {
+        "count": 3000,
+        "p50_ms": 15.0,
+        "p95_ms": 33.0,
+        "p99_ms": 130.0
+      },
+      "3": {
+        "count": 3000,
+        "p50_ms": 17.0,
+        "p95_ms": 39.0,
+        "p99_ms": 130.0
+      }
+    },
+    "counters": {
+      "partial": 0,
+      "admission_rejected": 0,
+      "hedges": 248,
+      "stale_redirects": 0,
+      "rate_limited": 0
+    },
+    "replication_lag": {
+      "s0/r1": 0,
+      "s1/r2": 0,
+      "s2/r0": 0,
+      "s3/r2": 0
+    }
+  }
+}

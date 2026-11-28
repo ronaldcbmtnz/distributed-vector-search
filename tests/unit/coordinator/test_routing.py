@@ -1,5 +1,7 @@
 """T112a — orden de réplicas por nivel, sospecha local con TTL y caché del mapa."""
 
+import pytest
+
 from dvs.coordinator.routing import ReplicaRouter, ShardMapCache, SuspicionTracker
 from dvs.core.model import ShardInfo
 
@@ -55,3 +57,43 @@ async def test_map_cache_ttl_and_invalidate() -> None:
     cache.invalidate()
     await cache.get()
     assert t.map_calls == 3
+
+
+class _FailingMap:
+    """Transport whose shard_map fails on demand (the map's owner died)."""
+
+    def __init__(self, smap: object) -> None:
+        self.smap = smap
+        self.fail = False
+        self.calls = 0
+
+    async def shard_map(self) -> object:
+        self.calls += 1
+        if self.fail:
+            raise RuntimeError("catalog died")
+        return self.smap
+
+
+async def test_map_cache_serves_last_known_map_when_refresh_fails() -> None:
+    clock = FakeClock()
+    smap = build_map()
+    t = _FailingMap(smap)
+    cache = ShardMapCache(t, ttl_s=2.0, clock=clock)  # type: ignore[arg-type]
+    assert await cache.get() is smap
+    t.fail = True
+    clock.t += 2.0
+    assert await cache.get() is smap  # stale but usable
+    assert await cache.get() is smap and t.calls == 2  # no retry storm within the TTL
+    cache.invalidate()
+    assert await cache.get() is smap and t.calls == 3
+    t.fail = False
+    clock.t += 2.0
+    assert await cache.get() is smap and t.calls == 4
+
+
+async def test_map_cache_first_fetch_failure_propagates() -> None:
+    t = _FailingMap(build_map())
+    t.fail = True
+    cache = ShardMapCache(t, ttl_s=2.0, clock=FakeClock())  # type: ignore[arg-type]
+    with pytest.raises(RuntimeError):
+        await cache.get()

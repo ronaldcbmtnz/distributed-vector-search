@@ -39,6 +39,15 @@ def test_load_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     assert load_config().cluster.num_shards >= 1
 
 
+def test_env_overrides_actor_restarts(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert load_config(EXAMPLE).actors.max_restarts == 0
+    monkeypatch.setenv("DVS_ACTORS_MAX_RESTARTS", "3")
+    assert load_config(EXAMPLE).actors.max_restarts == 3
+    monkeypatch.setenv("DVS_ACTORS_MAX_RESTARTS", "-5")
+    with pytest.raises(ValidationError):
+        load_config(EXAMPLE)
+
+
 def test_default_quorum_is_majority() -> None:
     cfg = Config.model_validate(_minimal(cluster={"replication_factor": 5}))
     assert cfg.cluster.quorum == 3

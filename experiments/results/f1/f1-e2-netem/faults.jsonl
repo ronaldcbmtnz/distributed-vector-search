@@ -1,0 +1,3 @@
+{"event": "fault_requested", "ts": "2026-11-27T23:45:19.168Z", "mono": 5473.336053816, "kind": "netem", "target": "ray-worker-2", "delay_ms": 200.0}
+{"event": "fault_applied", "ts": "2026-11-27T23:45:19.333Z", "mono": 5473.500949669, "kind": "netem", "target": "ray-worker-2", "delay_ms": 200.0, "container_id": "82f7516df5d9b61fd302ebdb21346c277f978e9c742302ee1a65b01fd3f81d24"}
+{"event": "fault_recovered", "ts": "2026-11-27T23:45:28.367Z", "mono": 5482.534855829, "kind": "netem", "target": "ray-worker-2", "delay_ms": 200.0, "container_id": "82f7516df5d9b61fd302ebdb21346c277f978e9c742302ee1a65b01fd3f81d24"}

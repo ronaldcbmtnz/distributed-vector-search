@@ -142,6 +142,10 @@ Los atajos `make up-ray` y `make down-ray` ejecutan el mismo ciclo desde un ento
 La configuración de despliegue está en [`deploy/ray/README.md`](deploy/ray/README.md). Si el puerto
 8080 está ocupado, establece `DVS_GATEWAY_PORT` antes del `up`.
 
+Con una red lenta, la imagen base de Ray (~1 GB) puede tardar horas en descargarse. En ese caso,
+`DVS_DOCKERFILE=deploy/ray/Dockerfile.offline make up-ray` construye la misma imagen reutilizando
+el `.venv` local (ver [`deploy/ray/README.md`](deploy/ray/README.md)).
+
 ## Pruebas y verificaciones
 
 Desde un entorno con el paquete instalado:
@@ -205,6 +209,13 @@ parciales solo búsquedas y recall@k es `|resultados ∩ ground_truth| / min(k, 
 Una búsqueda fallida aporta recall cero. Las ejecuciones se guardan bajo `runs/`, directorio
 ignorado por Git.
 
+Con un fallo, el runner divide además las operaciones en antes / durante / después del fallo
+(`fault_windows.json` y una tabla en `report.md`) y escribe una serie por segundo
+(`client/timeline.csv`). `python -m experiments.analysis runs/<run_id>` lo recalcula para una
+ejecución existente. La evidencia que cita el informe se copia a `experiments/results/` con
+`python -m experiments.archive runs/<run_id> ...`: resúmenes en claro, y latencias, logs e
+historias comprimidos. El dataset no se copia: se regenera con la semilla de `run.json`.
+
 ## Inyección de fallos (T120b)
 
 Los fallos Docker/SO solo apuntan a contenedores etiquetados del proyecto Compose `dvs-f1`. La
@@ -220,8 +231,10 @@ python -m experiments.faults --run-dir runs/fault-inspection info
 ```
 
 Escenarios disponibles: `docker-kill` (detiene un servicio Compose y lo vuelve a levantar),
-`kill-pid` (termina el PID de un actor Ray seleccionado), `docker-pause`, `netem` y
-`disconnect`. Por ejemplo, una pausa controlada:
+`kill-pid` (termina el PID de un actor Ray seleccionado), `docker-pause`, `netem`,
+`disconnect`, `ray-delay` y `ray-kill-shard` (mata sin reinicio todas las réplicas de un shard;
+F1 no las recrea, así que el shard queda caído hasta reiniciar el clúster). E1 acepta `kill-pid`
+y `docker-kill`. Por ejemplo, una pausa controlada:
 
 ```powershell
 python -m experiments.faults --run-dir runs/fault-pause run --kind docker-pause --target ray-worker-1 --duration-seconds 5

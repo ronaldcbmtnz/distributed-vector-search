@@ -161,4 +161,10 @@ def load_config(path: str | os.PathLike[str] | None = None) -> Config:
     if not target:
         raise ValueError("no config path given and DVS_CONFIG is not set")
     raw = yaml.safe_load(Path(target).read_text(encoding="utf-8"))
+    # Experiment override (E1 runs with and without actor restarts on the same mounted config).
+    restarts = os.environ.get("DVS_ACTORS_MAX_RESTARTS", "").strip()
+    if restarts and isinstance(raw, dict):
+        actors = raw.setdefault("actors", {})
+        if isinstance(actors, dict):
+            actors["max_restarts"] = restarts
     return Config.model_validate(raw)

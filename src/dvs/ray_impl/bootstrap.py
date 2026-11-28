@@ -34,6 +34,10 @@ async def start(
         lifetime="detached" if detached else None,
         get_if_exists=True,
         num_cpus=0,
+        # Pinned to the head node: the gateway already depends on it (GCS, Ray Client), so the
+        # map's owner adds no new single point of failure. On a worker, killing that worker
+        # killed the Catalog (T121b, two-worker crash).
+        resources={"node:__internal_head__": 0.001},
     ).remote(config.model_dump(), cluster, detached)
     await catalog.bootstrap.remote()
     transport = RayShardTransport(catalog, cluster=cluster, namespace=namespace)

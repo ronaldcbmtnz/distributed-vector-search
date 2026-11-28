@@ -1,0 +1,3 @@
+{"event": "fault_requested", "ts": "2026-11-27T23:48:14.971Z", "mono": 5649.139196517, "kind": "kill-pid", "target": "s0/r0"}
+{"event": "fault_applied", "ts": "2026-11-27T23:48:18.745Z", "mono": 5652.912787654, "kind": "kill-pid", "target": "s0/r0", "container_id": "58f0ad67363b5957ed46a370eaf909817c3f705e2df107c8912c42d17d6cfde4", "replica_id": "s0/r0", "pid": 247}
+{"event": "fault_recovered", "ts": "2026-11-27T23:48:24.986Z", "mono": 5659.153373895, "kind": "kill-pid", "target": "s0/r0", "container_id": "58f0ad67363b5957ed46a370eaf909817c3f705e2df107c8912c42d17d6cfde4", "replica_id": "s0/r0", "pid": 247}

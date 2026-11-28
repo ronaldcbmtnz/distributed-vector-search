@@ -1,0 +1,13 @@
+# Context for Dockerfile.offline: like ../../.dockerignore, but keeps the venv's site-packages.
+.git
+.venv/bin
+.venv/include
+.venv/lib64
+runs
+data
+orientacion_proyecto
+.sdd
+**/__pycache__
+.pytest_cache
+.ruff_cache
+.mypy_cache

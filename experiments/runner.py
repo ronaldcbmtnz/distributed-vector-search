@@ -22,10 +22,10 @@ import numpy as np
 
 from dvs.client import DVSClient
 from dvs.client.errors import ClientError
-from experiments.analysis import build_report, write_latencies
+from experiments.analysis import analyze_run, build_report, write_latencies
 from experiments.data_gen import DatasetParams, generate_and_write
 from experiments.e3_checker import check_observations
-from experiments.faults import FaultController
+from experiments.faults import FAULT_KINDS, FaultController
 from experiments.workloads import (
     load_vectors,
     run_e3_workload,
@@ -42,16 +42,18 @@ def _utc_now() -> str:
     return datetime.now(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
+def _git(*args: str) -> str:
+    return subprocess.run(
+        ["git", *args], cwd=ROOT, check=True, capture_output=True, text=True, timeout=5
+    ).stdout.strip()
+
+
 def _git_commit() -> str:
+    """HEAD, with a `-dirty` suffix when tracked files differ from it (evidence provenance)."""
     try:
-        return subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            cwd=ROOT,
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=5,
-        ).stdout.strip()
+        commit = _git("rev-parse", "HEAD")
+        dirty = _git("status", "--porcelain", "--untracked-files=no")
+        return f"{commit}-dirty" if dirty else commit
     except (OSError, subprocess.SubprocessError):
         return "unknown"
 
@@ -84,8 +86,11 @@ def run_scenario(args: argparse.Namespace) -> Path:
         raise ValueError("clients/queries/k must be positive and vectors must be at least k")
     if args.scenario in {"e1", "e3"} and (args.clients < 2 or args.clients % 2):
         raise ValueError(f"{args.scenario.upper()} requires an even client count of at least 2")
-    if args.scenario == "e1" and (args.target_kind != "ray" or args.fault_kind != "kill-pid"):
-        raise ValueError("E1 requires a Ray target and --fault-kind kill-pid")
+    if args.scenario == "e1" and (
+        args.target_kind != "ray" or args.fault_kind not in {"kill-pid", "docker-kill"}
+    ):
+        # E1 is a crash experiment: one replica process (kill-pid) or a whole node (docker-kill).
+        raise ValueError("E1 requires a Ray target and a crash fault (kill-pid or docker-kill)")
     if args.scenario == "e3" and args.fault_kind:
         raise ValueError("E3 is a consistency workload; use it without fault injection")
     if args.batch_size < 1 or args.batch_size > 1000:
@@ -314,6 +319,7 @@ def run_scenario(args: argparse.Namespace) -> Path:
         searches = [row for row in rows if row.get("recall") is not None]
         recall = float(np.mean([row["recall"] for row in searches])) if searches else None
         write_latencies(client_dir / "latencies.csv", rows)
+        run["fault_windows"] = analyze_run(run_dir)
         if fault_errors:
             run["fault_status"] = "failed"
             run["fault_error"] = f"{type(fault_errors[0]).__name__}: {fault_errors[0]}"
@@ -416,11 +422,12 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-dir", type=Path, default=ROOT / "runs")
     parser.add_argument(
         "--fault-kind",
-        choices=("docker-kill", "kill-pid", "docker-pause", "netem", "disconnect", "ray-delay"),
-        help="inject a scoped fault during the workload; ray-delay calls the T120a hook",
+        choices=FAULT_KINDS,
+        help="inject a scoped fault during the workload; ray-* faults call the T120a hooks",
     )
     parser.add_argument(
-        "--fault-target", help="Compose service, or replica id for kill-pid/ray-delay"
+        "--fault-target",
+        help="Compose service, replica id (kill-pid, ray-delay) or shard id (ray-kill-shard)",
     )
     parser.add_argument("--fault-ms", type=float, help="delay for netem (milliseconds)")
     parser.add_argument("--fault-after", type=float, default=1.0, help="seconds after first search")

@@ -109,6 +109,30 @@ def build_report(
                 f"| E3 invalid snapshots | {e3_check['invalid']} |",
             ]
         )
+    windows = run.get("fault_windows")
+    if windows and windows.get("fault_applied_mono") is not None:
+        lines.extend(
+            [
+                "",
+                "## Before / during / after the fault",
+                "",
+                f"Fault applied at t={windows.get('fault_applied_s')} s and recovered at "
+                f"t={windows.get('fault_recovered_s')} s (from the first operation; by "
+                "invocation time). An operation invoked just before `fault_applied` may already "
+                "be affected: the event is written when the injection command returns.",
+                "",
+                "| Window | Ops | Searches | Writes | Errors | Partial | p50 (ms) | p99 (ms) |",
+                "|---|---:|---:|---:|---:|---:|---:|---:|",
+                *[
+                    f"| {name} | {w['ops']} | {w['searches']} | {w['writes']} | {w['errors']} | "
+                    f"{w['partial']} | {ms(w['p50_ms'])} | {ms(w['p99_ms'])} |"
+                    for name in ("before", "during", "after")
+                    for w in [windows[name]]
+                ],
+                "",
+                "Per-second series: `client/timeline.csv`.",
+            ]
+        )
     lines.extend(
         [
             "",
@@ -136,3 +160,113 @@ def build_report(
         ]
     )
     return "\n".join(lines)
+
+
+_WRITE_OPS = frozenset({"upsert", "insert", "update", "delete", "batch"})
+
+
+def _window_stats(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    searches = [row for row in rows if row["op"] == "search"]
+    return {
+        "ops": len(rows),
+        "errors": sum(str(row["status"]).startswith("error:") for row in rows),
+        "partial": sum(row.get("partial") is True for row in searches),
+        "searches": len(searches),
+        "writes": sum(row["op"] in _WRITE_OPS for row in rows),
+        "p50_ms": percentile([float(row["latency_ms"]) for row in rows], 50),
+        "p99_ms": percentile([float(row["latency_ms"]) for row in rows], 99),
+    }
+
+
+def fault_windows(rows: list[dict[str, Any]], events: list[dict[str, Any]]) -> dict[str, Any]:
+    """Split operations by invocation time into before / during / after the fault.
+
+    `events` are `faults.jsonl` records; their `mono` clock is the runner's own monotonic clock,
+    the same one used for `t_inv`. Without a `fault_applied` event every row is "before".
+    """
+    applied = next((e["mono"] for e in events if e.get("event") == "fault_applied"), None)
+    recovered = next((e["mono"] for e in events if e.get("event") == "fault_recovered"), None)
+    groups: dict[str, list[dict[str, Any]]] = {"before": [], "during": [], "after": []}
+    for row in rows:
+        t = float(row["t_inv"])
+        if applied is None or t < applied:
+            groups["before"].append(row)
+        elif recovered is None or t < recovered:
+            groups["during"].append(row)
+        else:
+            groups["after"].append(row)
+    return {
+        "fault_applied_mono": applied,
+        "fault_recovered_mono": recovered,
+        **{name: _window_stats(group) for name, group in groups.items()},
+    }
+
+
+def timeline(rows: list[dict[str, Any]], bucket_s: float = 1.0) -> list[dict[str, Any]]:
+    """Per-bucket counts and latency of operations, by invocation time from the first one."""
+    if not rows:
+        return []
+    origin = min(float(row["t_inv"]) for row in rows)
+    buckets: dict[int, list[dict[str, Any]]] = {}
+    for row in rows:
+        buckets.setdefault(int((float(row["t_inv"]) - origin) // bucket_s), []).append(row)
+    return [
+        {"t_s": index * bucket_s, "origin_mono": origin, **_window_stats(buckets[index])}
+        for index in sorted(buckets)
+    ]
+
+
+def read_latencies(path: Path) -> list[dict[str, Any]]:
+    """Inverse of `write_latencies` (types restored for the analysis functions)."""
+    with path.open(newline="", encoding="utf-8") as stream:
+        return [
+            {
+                "op": row["op"],
+                "t_inv": float(row["t_inv"]),
+                "t_resp": float(row["t_resp"]),
+                "latency_ms": float(row["latency_ms"]),
+                "status": row["status"],
+                "partial": {"true": True, "false": False}.get(row["partial"]),
+                "coverage": float(row["coverage"]) if row["coverage"] else None,
+            }
+            for row in csv.DictReader(stream)
+        ]
+
+
+def analyze_run(run_dir: Path, bucket_s: float = 1.0) -> dict[str, Any]:
+    """Write `client/timeline.csv` and `fault_windows.json` for a finished run directory."""
+    import json
+
+    rows = read_latencies(run_dir / "client" / "latencies.csv")
+    journal = run_dir / "faults.jsonl"
+    events = (
+        [json.loads(line) for line in journal.read_text(encoding="utf-8").splitlines() if line]
+        if journal.exists()
+        else []
+    )
+    windows = fault_windows(rows, events)
+    series = timeline(rows, bucket_s)
+    origin = series[0]["origin_mono"] if series else 0.0
+    for key in ("fault_applied_mono", "fault_recovered_mono"):
+        if windows[key] is not None:
+            windows[key.replace("_mono", "_s")] = round(windows[key] - origin, 3)
+    fields = ("t_s", "ops", "searches", "writes", "errors", "partial", "p50_ms", "p99_ms")
+    with (run_dir / "client" / "timeline.csv").open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=fields, extrasaction="ignore")
+        writer.writeheader()
+        for item in series:
+            writer.writerow(
+                {k: (f"{v:.3f}" if isinstance(v, float) else v) for k, v in item.items()}
+            )
+    (run_dir / "fault_windows.json").write_text(
+        json.dumps(windows, indent=2, allow_nan=False) + "\n", encoding="utf-8"
+    )
+    return windows
+
+
+if __name__ == "__main__":
+    import json
+    import sys
+
+    for argument in sys.argv[1:]:
+        print(argument, json.dumps(analyze_run(Path(argument)), indent=1))

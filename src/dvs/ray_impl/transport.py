@@ -6,6 +6,12 @@ Normalizes Ray's runtime failures (observed in the T110a probe) into transport e
 - timeout                                                                 → TransportTimeout
 A local timeout does NOT stop the remote call in Ray, so on timeout or cancellation of the
 awaiting task this transport calls `ray.cancel` explicitly.
+
+`ray.get_actor` is a blocking call (a round trip to the GCS, through the head's proxy with Ray
+Client). It runs in a thread with the call's timeout: run inline, it froze the gateway's event
+loop for over a second while a killed actor was restarting, and every concurrent search missed
+its deadline (E1, T121b). A handle survives actor restarts, so it is only dropped when the actor
+is dead for good.
 """
 
 from __future__ import annotations
@@ -15,7 +21,7 @@ from collections.abc import Sequence
 from typing import Any
 
 import ray
-from ray.exceptions import PendingCallsLimitExceeded, RayActorError
+from ray.exceptions import ActorDiedError, PendingCallsLimitExceeded, RayActorError
 
 from dvs.coordinator.transport import (
     NotPrimary,
@@ -43,18 +49,26 @@ class RayShardTransport:
         self.namespace = namespace
         self._handles: dict[str, Any] = {}
 
-    def _handle(self, replica_id: str) -> Any:
+    async def _handle(self, replica_id: str, timeout_s: float) -> Any:
         h = self._handles.get(replica_id)
         if h is None:
+            name = replica_actor_name(self.cluster, replica_id)
             try:
-                h = ray.get_actor(replica_actor_name(self.cluster, replica_id), self.namespace)
+                h = await asyncio.wait_for(
+                    asyncio.to_thread(ray.get_actor, name, self.namespace), timeout=timeout_s
+                )
             except ValueError as e:  # name not registered (dead detached actor, wrong cluster)
                 raise ReplicaUnreachable(replica_id, "no such actor") from e
+            except TimeoutError as e:
+                raise TransportTimeout(replica_id) from e
             self._handles[replica_id] = h
         return h
 
     async def _call(self, replica_id: str, method: str, timeout_s: float, *args: Any) -> Any:
-        handle = self._handle(replica_id)
+        loop = asyncio.get_running_loop()
+        started = loop.time()
+        handle = await self._handle(replica_id, timeout_s)
+        timeout_s = max(0.0, timeout_s - (loop.time() - started))
         try:
             ref = getattr(handle, method).remote(*args)
         except PendingCallsLimitExceeded as e:
@@ -68,7 +82,8 @@ class RayShardTransport:
             ray.cancel(ref)  # hedge lost or global deadline expired: stop the remote work
             raise
         except RayActorError as e:  # died, unavailable (restarting), or unreachable
-            self._handles.pop(replica_id, None)
+            if isinstance(e, ActorDiedError):  # restarting actors keep the same handle
+                self._handles.pop(replica_id, None)
             raise ReplicaUnreachable(replica_id, type(e).__name__) from e
 
     async def shard_map(self) -> ShardMap:

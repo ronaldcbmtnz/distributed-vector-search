@@ -1,0 +1,3 @@
+{"event": "fault_requested", "ts": "2026-11-27T23:46:19.611Z", "mono": 5533.778944954, "kind": "ray-kill-shard", "target": "s0"}
+{"event": "fault_applied", "ts": "2026-11-27T23:46:26.168Z", "mono": 5540.335841729, "kind": "ray-kill-shard", "target": "s0", "replicas": ["s0/r0", "s0/r1", "s0/r2"]}
+{"event": "fault_recovered", "ts": "2026-11-27T23:46:28.105Z", "mono": 5542.272376838, "kind": "ray-kill-shard", "target": "s0", "replicas": ["s0/r0", "s0/r1", "s0/r2"]}

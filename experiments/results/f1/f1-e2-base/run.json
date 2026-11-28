@@ -1,0 +1,66 @@
+{
+  "run_id": "f1-e2-base",
+  "scenario": "e2",
+  "target_kind": "ray",
+  "base_url": "http://127.0.0.1:8080",
+  "collection": "demo",
+  "seed": 20261125,
+  "vectors": 5000,
+  "dim": 128,
+  "n_clusters": 32,
+  "queries": 2000,
+  "k": 10,
+  "clients": 8,
+  "batch_size": 500,
+  "git_commit": "3fa150a3d467f2fc3d2e202b967ae34d0d005dff-dirty",
+  "started_at": "2026-11-27T23:43:01.129Z",
+  "started_mono": 5335.292890108,
+  "status": "completed",
+  "fault_status": "not requested",
+  "fault": null,
+  "server_run_id": "f1-e2-base",
+  "fault_windows": {
+    "fault_applied_mono": null,
+    "fault_recovered_mono": null,
+    "before": {
+      "ops": 2000,
+      "errors": 0,
+      "partial": 0,
+      "searches": 2000,
+      "writes": 0,
+      "p50_ms": 45.9094695,
+      "p99_ms": 101.13838647
+    },
+    "during": {
+      "ops": 0,
+      "errors": 0,
+      "partial": 0,
+      "searches": 0,
+      "writes": 0,
+      "p50_ms": null,
+      "p99_ms": null
+    },
+    "after": {
+      "ops": 0,
+      "errors": 0,
+      "partial": 0,
+      "searches": 0,
+      "writes": 0,
+      "p50_ms": null,
+      "p99_ms": null
+    }
+  },
+  "loaded_vectors": 5000,
+  "completed_operations": 2000,
+  "completed_searches": 2000,
+  "completed_writes": 0,
+  "recall_at_k": 1.0,
+  "finished_at": "2026-11-27T23:43:18.262Z",
+  "finished_mono": 5352.430133629,
+  "duration_seconds": 17.13724352099962,
+  "server_logs": {
+    "source": "/home/ronald/Proyecto SD/distributed-vector-search/runs/f1-e2-base/logs",
+    "copied": 0,
+    "collected_at": "2026-11-27T23:43:18.262Z"
+  }
+}

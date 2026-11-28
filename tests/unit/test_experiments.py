@@ -432,3 +432,20 @@ def test_fault_evidence_path_cannot_escape_runs(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr("experiments.faults.ROOT", tmp_path)
     with pytest.raises(FaultError, match="under"):
         FaultController(tmp_path / "outside")
+
+
+def test_kill_shard_fault_kills_every_replica_of_that_shard(short_run_dir, monkeypatch) -> None:
+    controller = FaultController(short_run_dir)
+    replicas = [{"replica_id": f"s{s}/r{r}"} for s in range(3) for r in range(3)]
+    monkeypatch.setattr(controller, "_replicas", lambda: replicas)
+    monkeypatch.setattr(controller, "_wait_cluster_healthy", lambda: None)
+    killed: list[tuple[str, ...]] = []
+    monkeypatch.setattr(controller, "_gateway_command", lambda *args: killed.append(args) or "")
+
+    token = controller.apply("ray-kill-shard", "s1")
+    controller.recover(token)
+
+    assert killed == [("kill", "--replica", "s1/r0", "s1/r1", "s1/r2", "--no-restart")]
+    assert token["replicas"] == ["s1/r0", "s1/r1", "s1/r2"]
+    with pytest.raises(FaultError, match="shard id"):
+        controller.apply("ray-kill-shard", "ray-worker-1")

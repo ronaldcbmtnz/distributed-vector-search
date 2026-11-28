@@ -1,0 +1,33 @@
+{
+  "fault_applied_mono": 5652.912787654,
+  "fault_recovered_mono": 5659.153373895,
+  "before": {
+    "ops": 1375,
+    "errors": 0,
+    "partial": 0,
+    "searches": 602,
+    "writes": 773,
+    "p50_ms": 29.393276,
+    "p99_ms": 87.78176909999998
+  },
+  "during": {
+    "ops": 1651,
+    "errors": 242,
+    "partial": 0,
+    "searches": 714,
+    "writes": 937,
+    "p50_ms": 27.008895,
+    "p99_ms": 57.751035
+  },
+  "after": {
+    "ops": 974,
+    "errors": 69,
+    "partial": 0,
+    "searches": 684,
+    "writes": 290,
+    "p50_ms": 25.039808999999998,
+    "p99_ms": 52.01111501
+  },
+  "fault_applied_s": 5.774,
+  "fault_recovered_s": 12.015
+}

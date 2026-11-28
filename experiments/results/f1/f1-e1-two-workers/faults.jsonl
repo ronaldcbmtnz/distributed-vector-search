@@ -1,0 +1,6 @@
+{"event": "fault_requested", "ts": "2026-11-27T23:50:26.268Z", "mono": 5780.435344681, "kind": "docker-kill", "target": "ray-worker-1"}
+{"event": "fault_applied", "ts": "2026-11-27T23:50:26.483Z", "mono": 5780.650326601, "kind": "docker-kill", "target": "ray-worker-1", "container_id": "8574bcc5b9b18b83a6689193c1fd4e672c568bac23599e430b3aecd52c9f9cf8"}
+{"event": "fault_requested", "ts": "2026-11-27T23:50:27.342Z", "mono": 5781.509479786, "kind": "docker-kill", "target": "ray-worker-3"}
+{"event": "fault_applied", "ts": "2026-11-27T23:50:27.549Z", "mono": 5781.717275785, "kind": "docker-kill", "target": "ray-worker-3", "container_id": "63bb0a6165ce38377bdb1c006d2e68556afdc910cb226f0be4b8924bbe204fc2"}
+{"event": "fault_recovered", "ts": "2026-11-27T23:51:01.573Z", "mono": 5815.741233022, "kind": "docker-kill", "target": "ray-worker-3", "container_id": "63bb0a6165ce38377bdb1c006d2e68556afdc910cb226f0be4b8924bbe204fc2"}
+{"event": "fault_recovered", "ts": "2026-11-27T23:51:02.236Z", "mono": 5816.403363193, "kind": "docker-kill", "target": "ray-worker-1", "container_id": "8574bcc5b9b18b83a6689193c1fd4e672c568bac23599e430b3aecd52c9f9cf8"}
